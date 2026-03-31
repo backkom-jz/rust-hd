@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>签到统计</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+      color: #14241f;
+      background: #5a8870 url("/static/img/jy_0401_02.png") center / cover no-repeat fixed;
+    }
+    .overlay {
+      min-height: 100vh;
+      padding: 1.5rem 1rem 2.5rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(25, 50, 40, 0.45) 100%);
+    }
+    .wrap {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.92);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 1.5rem 1.35rem 1.75rem;
+      box-shadow: 0 20px 50px rgba(20, 40, 30, 0.22), 0 0 0 1px rgba(255,255,255,0.45) inset;
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.4rem;
+      color: #1a4d3a;
+    }
+    nav { margin-bottom: 1rem; font-size: 0.9rem; }
+    nav a { color: #1d6b52; text-decoration: none; font-weight: 500; }
+    nav a:hover { text-decoration: underline; }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: flex-end;
+      margin-bottom: 1.1rem;
+    }
+    .filters label { display: flex; flex-direction: column; font-size: 0.78rem; color: #3d5c50; gap: 0.3rem; font-weight: 500; }
+    .filters select {
+      padding: 0.5rem 0.55rem;
+      border-radius: 10px;
+      border: 1px solid rgba(30, 90, 70, 0.22);
+      min-width: 5.5rem;
+      font-size: 0.95rem;
+      background: rgba(255,255,255,0.98);
+    }
+    .filters button {
+      padding: 0.52rem 1.1rem;
+      background: linear-gradient(135deg, #2a8f6a 0%, #1d6b52 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(29, 107, 82, 0.3);
+    }
+    .filters button:hover { filter: brightness(1.05); }
+    .summary { margin-bottom: 0.85rem; font-size: 1.05rem; color: #2d4a40; }
+    .summary strong { color: #1d6b52; font-size: 1.15em; }
+    .table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(30, 90, 70, 0.12); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 0.6rem 0.65rem; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    th { background: rgba(236, 253, 245, 0.9); font-weight: 600; color: #1a4d3a; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(42, 143, 106, 0.06); }
+    .empty { color: #5a7a6e; padding: 1.1rem 0; text-align: center; }
+    .err { color: #991b1b; padding: 0.5rem 0; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="wrap">
+      <div class="card">
+        <nav><a href="/checkin">返回签到</a></nav>
+        <h1>签到统计</h1>
+        <div class="filters">
+          <label>年
+            <select id="year"></select>
+          </label>
+          <label>月
+            <select id="month"></select>
+          </label>
+          <label>日
+            <select id="day"></select>
+          </label>
+          <button type="button" id="query">查询</button>
+        </div>
+        <p class="summary">当日签到人数：<strong id="count">—</strong></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>手机号</th>
+                <th>用户名</th>
+                <th>签到时间</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <p id="empty" class="empty" style="display:none;">该日暂无签到记录</p>
+        <p id="err" class="err" style="display:none;"></p>
+      </div>
+    </div>
+  </div>
+  <script>
+    const yearSel = document.getElementById('year');
+    const monthSel = document.getElementById('month');
+    const daySel = document.getElementById('day');
+    const tbody = document.getElementById('tbody');
+    const countEl = document.getElementById('count');
+    const emptyEl = document.getElementById('empty');
+    const errEl = document.getElementById('err');
+
+    const now = new Date();
+    const y0 = now.getFullYear();
+    for (let y = y0 - 2; y <= y0 + 1; y++) {
+      const o = document.createElement('option');
+      o.value = y;
+      o.textContent = y + '年';
+      if (y === y0) o.selected = true;
+      yearSel.appendChild(o);
+    }
+    for (let m = 1; m <= 12; m++) {
+      const o = document.createElement('option');
+      o.value = m;
+      o.textContent = m + '月';
+      if (m === now.getMonth() + 1) o.selected = true;
+      monthSel.appendChild(o);
+    }
+
+    function daysInMonth(y, m) {
+      return new Date(y, m, 0).getDate();
+    }
+
+    function rebuildDays() {
+      const y = parseInt(yearSel.value, 10);
+      const m = parseInt(monthSel.value, 10);
+      const max = daysInMonth(y, m);
+      const prev = parseInt(daySel.value, 10) || 1;
+      daySel.innerHTML = '';
+      for (let d = 1; d <= max; d++) {
+        const o = document.createElement('option');
+        o.value = d;
+        o.textContent = d + '日';
+        if (d === Math.min(prev, max)) o.selected = true;
+        daySel.appendChild(o);
+      }
+    }
+
+    yearSel.addEventListener('change', rebuildDays);
+    monthSel.addEventListener('change', rebuildDays);
+    rebuildDays();
+    daySel.value = String(now.getDate());
+
+    async function load() {
+      errEl.style.display = 'none';
+      emptyEl.style.display = 'none';
+      tbody.innerHTML = '';
+      const year = yearSel.value;
+      const month = monthSel.value;
+      const day = daySel.value;
+      const url = `/api/checkins?year=${year}&month=${month}&day=${day}`;
+      try {
+        const res = await fetch(url);
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          errEl.textContent = data.error || '查询失败';
+          errEl.style.display = 'block';
+          countEl.textContent = '—';
+          return;
+        }
+        countEl.textContent = String(data.count ?? 0);
+        const rows = data.signers || [];
+        if (rows.length === 0) {
+          emptyEl.style.display = 'block';
+          return;
+        }
+        for (const r of rows) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.signed_at)}</td>`;
+          tbody.appendChild(tr);
+        }
+      } catch {
+        errEl.textContent = '网络错误';
+        errEl.style.display = 'block';
+        countEl.textContent = '—';
+      }
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    document.getElementById('query').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>
