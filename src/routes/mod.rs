@@ -1,6 +1,7 @@
 use actix_web::web;
 
 mod checkin;
+mod geo;
 mod pages;
 mod user;
 
@@ -10,6 +11,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(
             web::scope("/api")
                 .configure(user::configure)
-                .configure(checkin::configure),
+                .configure(checkin::configure)
+                .configure(geo::configure),
         );
 }
