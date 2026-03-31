@@ -5,13 +5,10 @@ mod models;
 mod routes;
 mod services;
 
-use std::path::PathBuf;
-
 use actix_files::Files;
 use actix_web::{web, App, HttpServer};
 use sqlx::mysql::MySqlPoolOptions;
 
-use crate::config::BIND_ADDR;
 use crate::services::{CheckInService, UserService};
 
 #[actix_web::main]
@@ -45,7 +42,8 @@ async fn main() -> std::io::Result<()> {
 
     let user_service = UserService::new();
     let checkin_service = CheckInService::new(pool);
-    let static_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/static");
+    let bind_addr = config::bind_addr();
+    let static_dir = config::static_dir();
 
     HttpServer::new(move || {
         App::new()
@@ -54,7 +52,7 @@ async fn main() -> std::io::Result<()> {
             .service(Files::new("/static", static_dir.clone()).prefer_utf8(true))
             .configure(routes::config)
     })
-    .bind(BIND_ADDR)?
+    .bind(&bind_addr)?
     .run()
     .await
 }

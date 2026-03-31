@@ -1,4 +1,16 @@
-pub const BIND_ADDR: &str = "127.0.0.1:8088";
+use std::path::PathBuf;
+
+/// `BIND_ADDR`，默认 `127.0.0.1:8088`。生产环境常设为 `0.0.0.0:8088`（再由 Nginx 反代）。
+pub fn bind_addr() -> String {
+    std::env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:8088".to_string())
+}
+
+/// 静态资源目录（含 `img/`）。生产环境应设置 `STATIC_DIR` 指向部署机上的目录，勿依赖编译机路径。
+pub fn static_dir() -> PathBuf {
+    std::env::var("STATIC_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/static"))
+}
 
 /// Prefer `DATABASE_URL` (`mysql://user:pass@host:port/db?charset=utf8mb4`),
 /// or set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and optional `DB_PORT`.
