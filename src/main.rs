@@ -1,4 +1,5 @@
 mod config;
+mod coord_cn;
 mod db;
 mod geo;
 mod handlers;

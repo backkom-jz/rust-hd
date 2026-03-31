@@ -105,6 +105,7 @@
     .geo-panel .status { font-weight: 600; color: #14523d; }
     .geo-panel.warn { border-color: #f59e0b; background: rgba(254, 243, 199, 0.35); color: #78350f; }
     .geo-hint { font-size: 0.72rem; color: #64748b; margin-top: 0.35rem; }
+    .geo-addr { font-size: 0.76rem; color: #475569; margin-top: 0.4rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
     button[type="submit"] {
       width: 100%;
       padding: 0.75rem;
@@ -143,7 +144,8 @@
       <div id="geoPanel" class="geo-panel warn">
         <div class="status" id="geoStatus">正在请求定位权限…</div>
         <div id="geoDetail"></div>
-        <div class="geo-hint">若定位失败：请检查系统定位权限；生产站点请尽量使用 <strong>HTTPS</strong>，部分浏览器在非安全上下文中会禁用定位。</div>
+        <div id="geoAddress" class="geo-addr" aria-live="polite"></div>
+        <div class="geo-hint" id="geoHintBase">若定位失败：请检查系统与浏览器定位权限；公网访问请使用 <strong>HTTPS</strong>（Chrome 等在 HTTP 下常无法定位）。国内文字地址需在服务器配置 <code>AMAP_WEB_KEY</code>（高德 Web 服务 Key）。</div>
       </div>
       <form id="form">
         <label for="phone">手机号</label>
@@ -206,8 +208,56 @@
       const geoPanel = document.getElementById('geoPanel');
       const geoStatus = document.getElementById('geoStatus');
       const geoDetail = document.getElementById('geoDetail');
+      const geoAddress = document.getElementById('geoAddress');
       const btn = document.getElementById('btn');
       let pos = null;
+
+      function isInsecureForGeo() {
+        try {
+          return location.protocol === 'http:' &&
+            location.hostname !== 'localhost' &&
+            location.hostname !== '127.0.0.1' &&
+            location.hostname !== '[::1]';
+        } catch (_) { return false; }
+      }
+
+      function mapGeoError(e) {
+        let base = '';
+        switch (e && e.code) {
+          case 1:
+            base = '已拒绝定位权限，请在浏览器或系统设置中允许本站使用「位置」。';
+            break;
+          case 2:
+            base = '暂时无法确定位置（室内信号弱或未开 GPS 时常见），请到窗边或室外重试。';
+            break;
+          case 3:
+            base = '定位超时，请确认已开启系统定位后重试。';
+            break;
+          default:
+            base = (e && e.message) ? String(e.message) : '未知错误';
+        }
+        if (isInsecureForGeo()) {
+          base += ' 【重要】当前为 HTTP 访问：多数浏览器会禁止非安全上下文定位，请改用 HTTPS 域名打开本页。';
+        }
+        return '定位失败：' + base;
+      }
+
+      async function loadReverseAddress(lat, lng) {
+        geoAddress.textContent = '正在解析附近地址…';
+        try {
+          const ar = await fetch('/api/geo/reverse?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng));
+          const aj = await ar.json().catch(() => ({}));
+          if (ar.ok && aj.display_name) {
+            geoAddress.textContent = '大致位置：' + String(aj.display_name);
+          } else if (aj.error) {
+            geoAddress.textContent = '文字地址未返回（' + aj.error + '），不影响按坐标签到。';
+          } else {
+            geoAddress.textContent = '未能解析文字地址，仍可根据坐标签到。';
+          }
+        } catch (_) {
+          geoAddress.textContent = '地址解析请求失败，仍可根据坐标签到。';
+        }
+      }
 
       function setReady(lat, lng, acc) {
         pos = { lat, lng };
@@ -221,6 +271,7 @@
         geoDetail.textContent = '距「' + venueName + '」中心约 ' + d.toFixed(2) + ' km' + accText;
         btn.disabled = !inside;
         btn.textContent = inside ? '提交签到' : '位置不在围栏内';
+        loadReverseAddress(lat, lng);
       }
 
       function setErr(text) {
@@ -228,19 +279,39 @@
         geoPanel.classList.add('warn');
         geoStatus.textContent = text;
         geoDetail.textContent = '';
+        geoAddress.textContent = '';
         btn.disabled = true;
         btn.textContent = '获取定位后可签到';
       }
 
-      if (!navigator.geolocation) {
-        setErr('当前浏览器不支持定位');
-      } else {
+      function requestLocation() {
+        if (!navigator.geolocation) {
+          setErr('当前浏览器不支持定位');
+          return;
+        }
+        if (isInsecureForGeo()) {
+          geoAddress.textContent = '提示：当前为 HTTP 非安全访问，定位可能被浏览器拦截，请使用 https:// 域名访问。';
+        }
+        const onOk = (r) => setReady(r.coords.latitude, r.coords.longitude, r.coords.accuracy);
+        const onFail = (e) => setErr(mapGeoError(e));
         navigator.geolocation.getCurrentPosition(
-          (r) => setReady(r.coords.latitude, r.coords.longitude, r.coords.accuracy),
-          (e) => setErr('定位失败：' + (e.message || e.code)),
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+          onOk,
+          (e) => {
+            if (e.code === 2 || e.code === 3) {
+              navigator.geolocation.getCurrentPosition(onOk, onFail, {
+                enableHighAccuracy: false,
+                timeout: 24000,
+                maximumAge: 120000
+              });
+            } else {
+              onFail(e);
+            }
+          },
+          { enableHighAccuracy: true, timeout: 28000, maximumAge: 0 }
         );
       }
+
+      requestLocation();
 
       const form = document.getElementById('form');
       const msg = document.getElementById('msg');
