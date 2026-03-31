@@ -1,0 +1,30 @@
+# 国内 ECS 上 cargo 拉 crates.io 超时：把本文件内容合并到 root 或部署用户的
+#   ~/.cargo/config.toml
+# （若已存在 [source.crates-io] 等段落，请手工合并，勿简单覆盖丢配置）
+#
+# 创建目录并编辑：
+#   mkdir -p ~/.cargo
+#   nano ~/.cargo/config.toml
+
+[source.crates-io]
+replace-with = "rsproxy-sparse"
+
+# 字节跳动 rsproxy（sparse 索引，推荐）
+[source.rsproxy-sparse]
+registry = "sparse+https://rsproxy.cn/index/"
+
+# 若 rsproxy 仍慢，可改用下面其一，并把 replace-with 改成对应名称：
+#
+# [source.ustc]
+# registry = "https://mirrors.ustc.edu.cn/crates.io-index"
+#
+# [source.tuna]
+# registry = "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git"
+
+[net]
+retry = 5
+
+# 网络极差时可加大超时（Cargo 1.68+）
+[http]
+timeout = 300
+check-retry = 3

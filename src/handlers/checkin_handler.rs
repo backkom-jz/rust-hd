@@ -3,11 +3,21 @@ use actix_web::{web, HttpResponse, Responder};
 use crate::models::{CheckInDateQuery, SignInBody};
 use crate::services::CheckInService;
 
+pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder {
+    let f = service.get_fence().await;
+    HttpResponse::Ok().json(serde_json::json!({
+        "center_lat": f.center_lat,
+        "center_lng": f.center_lng,
+        "radius_km": f.radius_km,
+        "venue": f.venue_name,
+    }))
+}
+
 fn is_bad_request(msg: &str) -> bool {
     matches!(
         msg,
-        "手机号不能为空" | "用户名不能为空" | "无效的日期"
-    )
+        "手机号不能为空" | "用户名不能为空" | "无效的日期" | "请提供有效的定位坐标"
+    ) || msg.starts_with("签到地点需在")
 }
 
 pub async fn sign_in(

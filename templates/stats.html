@@ -76,6 +76,20 @@
     tbody tr:hover { background: rgba(42, 143, 106, 0.06); }
     .empty { color: #5a7a6e; padding: 1.1rem 0; text-align: center; }
     .err { color: #991b1b; padding: 0.5rem 0; font-size: 0.9rem; }
+    .fence-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #14523d;
+      background: rgba(42, 157, 116, 0.12);
+      border: 1px solid rgba(29, 107, 82, 0.22);
+      border-radius: 999px;
+      padding: 0.25rem 0.65rem;
+      margin-bottom: 0.75rem;
+    }
+    .hint { font-size: 0.8rem; color: #5a7a6e; margin-bottom: 0.85rem; line-height: 1.45; }
   </style>
 </head>
 <body>
@@ -83,7 +97,9 @@
     <div class="wrap">
       <div class="card">
         <nav><a href="/checkin">返回签到</a></nav>
-        <h1>签到统计</h1>
+        <h1 id="statsHeading">签到统计</h1>
+        <div class="fence-tag" id="fenceTag">正在加载围栏信息…</div>
+        <p class="hint" id="fenceHint">正在加载说明…</p>
         <div class="filters">
           <label>年
             <select id="year"></select>
@@ -104,6 +120,7 @@
                 <th>手机号</th>
                 <th>用户名</th>
                 <th>签到时间</th>
+                <th>距中心(km)</th>
               </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -189,7 +206,7 @@
         }
         for (const r of rows) {
           const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.signed_at)}</td>`;
+          tr.innerHTML = `<td>${escapeHtml(r.phone)}</td><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.signed_at)}</td><td>${escapeHtml(r.distance_km)}</td>`;
           tbody.appendChild(tr);
         }
       } catch {
@@ -207,6 +224,39 @@
     }
 
     document.getElementById('query').addEventListener('click', load);
+
+    function fmtRk(k) {
+      if (typeof k !== 'number' || !Number.isFinite(k)) return '5';
+      if (Math.abs(k - Math.round(k)) < 1e-6) return String(Math.round(k));
+      return k.toFixed(1);
+    }
+
+    (async function loadFenceHint() {
+      const venueDefault = '签到场地';
+      try {
+        const r = await fetch('/api/checkins/fence');
+        if (r.ok) {
+          const j = await r.json();
+          const venue = (typeof j.venue === 'string' && j.venue.trim()) ? j.venue.trim() : venueDefault;
+          const rk = typeof j.radius_km === 'number' ? j.radius_km : 5;
+          document.getElementById('fenceTag').textContent =
+            '📍 ' + venue + ' · 半径 ' + fmtRk(rk) + ' km · 围栏内记录';
+          document.getElementById('fenceHint').textContent =
+            '仅统计已在「' + venue + '」周边 ' + fmtRk(rk) + ' km 围栏内提交的签到；本列数值为签到时刻至围栏中心的球面直线距离（km）。';
+          document.getElementById('statsHeading').textContent = venue + ' · 签到统计';
+          document.title = venue + ' · 签到统计';
+        } else {
+          document.getElementById('fenceTag').textContent = '📍 ' + venueDefault + ' · 围栏内记录';
+          document.getElementById('fenceHint').textContent =
+            '仅统计已在地理围栏内提交的签到；本列为签到时刻至围栏中心的直线距离（km）。';
+        }
+      } catch (_) {
+        document.getElementById('fenceTag').textContent = '📍 ' + venueDefault + ' · 围栏内记录';
+        document.getElementById('fenceHint').textContent =
+          '仅统计已在地理围栏内提交的签到；本列为签到时刻至围栏中心的直线距离（km）。';
+      }
+    })();
+
     load();
   </script>
 </body>

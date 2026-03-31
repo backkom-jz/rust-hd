@@ -8,6 +8,23 @@
 2. `cargo run`
 3. 浏览器访问 `http://127.0.0.1:8088/checkin`（端口可通过环境变量 `BIND_ADDR` 修改）。
 
+### 签到围栏（数据库配置）
+
+应用启动时会创建表 **`geo_fence_config`**（主键 `singleton = 'x'` 单行）。**优先使用库内配置**校验签到范围；读表失败或无行时才用环境变量 `GEO_FENCE_*` 兜底。修改库后**下一次请求即生效**，一般不必重启进程。
+
+```sql
+UPDATE geo_fence_config SET
+  center_lat = 31.1569,
+  center_lng = 121.4746,
+  radius_km = 5,
+  venue_name = '上海东方体育中心'
+WHERE singleton = 'x';
+```
+
+- `center_lat` / `center_lng`：WGS84  
+- `radius_km`：允许半径（球面距离，公里）  
+- `venue_name`：展示名称（错误提示与 `/api/checkins/fence` 的 `venue` 字段）
+
 ## 生产环境部署
 
 ### 1. 在服务器上构建或交叉编译
@@ -21,6 +38,27 @@ cargo build --release
 产物：`target/release/actix-hd`。
 
 也可在 CI 中构建，将二进制与静态目录一并发布到服务器。
+
+#### 国内服务器：`cargo build` 下载 crates 超时
+
+若出现 `Timeout was reached`、`failed to download from https://index.crates.io/...`，说明访问官方源过慢。在 ECS 上配置 **国内镜像** 后再编译：
+
+```bash
+mkdir -p ~/.cargo
+# 将仓库中 deploy/cargo-config-china.toml.example 的内容写入 ~/.cargo/config.toml
+nano ~/.cargo/config.toml
+cd /path/to/actix-hd && cargo build --release
+```
+
+编译成功后**务必安装二进制**，否则 systemd 会因找不到文件报 **203/EXEC**：
+
+```bash
+sudo mkdir -p /opt/actix-hd
+sudo install -m 755 target/release/actix-hd /opt/actix-hd/actix-hd
+sudo systemctl restart actix-hd
+```
+
+可用 `file /opt/actix-hd/actix-hd` 确认文件存在且为 **ELF**（Linux 可执行文件）。
 
 ### 2. 准备目录与静态资源
 

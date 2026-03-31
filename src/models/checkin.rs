@@ -7,12 +7,16 @@ pub struct CheckInRecord {
     pub phone: String,
     pub username: String,
     pub signed_at: DateTime<Local>,
+    /// 签到位置到围栏中心的直线距离（公里）
+    pub distance_km: f64,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct SignInBody {
     pub phone: String,
     pub username: String,
+    pub latitude: f64,
+    pub longitude: f64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -39,4 +43,6 @@ pub struct CheckInSignerRow {
     pub phone: String,
     pub username: String,
     pub signed_at: String,
+    /// 展示用，无历史数据时为 "—"
+    pub distance_km: String,
 }
