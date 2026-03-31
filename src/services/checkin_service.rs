@@ -7,6 +7,7 @@ pub const ERR_CHECKIN_ALREADY_TODAY: &str = "今日已签到，同一手机号�
 use crate::geo::Fence;
 use crate::models::{
     CheckInDateQuery, CheckInRecord, CheckInSignerRow, CheckInStatsResponse, SignInBody,
+    SignInOpenBody,
 };
 
 #[derive(Clone)]
@@ -60,19 +61,37 @@ impl CheckInService {
 
     /// 校验地理围栏后写入：页面 `/checkin`，接口 `POST /api/checkins`。
     pub async fn sign_in(&self, body: SignInBody) -> Result<CheckInRecord, String> {
-        self.sign_in_inner(body, true).await
+        self.sign_in_with_coords(
+            body.phone,
+            body.username,
+            Some((body.latitude, body.longitude)),
+            true,
+        )
+        .await
     }
 
-    /// 不校验与围栏距离，仍写入坐标及距参考中心的公里数（仅展示）；页面 `/checkin2`，接口 `POST /api/checkins/open`。
-    pub async fn sign_in_open(&self, body: SignInBody) -> Result<CheckInRecord, String> {
-        self.sign_in_inner(body, false).await
+    /// 不校验围栏；坐标可省略。页面 `/checkin2`，接口 `POST /api/checkins/open`。
+    pub async fn sign_in_open(&self, body: SignInOpenBody) -> Result<CheckInRecord, String> {
+        let coords = match (body.latitude, body.longitude) {
+            (None, None) => None,
+            (Some(lat), Some(lng)) => Some((lat, lng)),
+            _ => return Err("纬度与经度须同时提供或同时省略".into()),
+        };
+        self.sign_in_with_coords(body.phone, body.username, coords, false)
+            .await
     }
 
-    async fn sign_in_inner(&self, body: SignInBody, enforce_fence: bool) -> Result<CheckInRecord, String> {
+    async fn sign_in_with_coords(
+        &self,
+        phone_raw: String,
+        username_raw: String,
+        coords: Option<(f64, f64)>,
+        enforce_fence: bool,
+    ) -> Result<CheckInRecord, String> {
         let fence = self.get_fence().await;
 
-        let phone = body.phone.trim().to_string();
-        let username = body.username.trim().to_string();
+        let phone = phone_raw.trim().to_string();
+        let username = username_raw.trim().to_string();
         if phone.is_empty() {
             return Err("手机号不能为空".into());
         }
@@ -80,24 +99,33 @@ impl CheckInService {
             return Err("用户名不能为空".into());
         }
 
-        let lat = body.latitude;
-        let lng = body.longitude;
-        if !lat.is_finite() || !lng.is_finite() {
-            return Err("请提供有效的定位坐标".into());
-        }
-        if !(-90.0..=90.0).contains(&lat) || !(-180.0..=180.0).contains(&lng) {
-            return Err("请提供有效的定位坐标".into());
-        }
-
-        let dist = fence.distance_from_center_km(lat, lng);
-        if enforce_fence && !fence.contains(lat, lng) {
-            return Err(format!(
-                "签到地点需在「{}」周边{}公里内（当前距该中心约{:.2}公里）",
-                fence.venue_name,
-                fmt_radius(fence.radius_km),
-                dist
-            ));
-        }
+        let (lat_bind, lng_bind, dist_bind): (Option<f64>, Option<f64>, Option<f64>) =
+            match coords {
+                None => {
+                    if enforce_fence {
+                        return Err("请提供有效的定位坐标".into());
+                    }
+                    (None, None, None)
+                }
+                Some((lat, lng)) => {
+                    if !lat.is_finite() || !lng.is_finite() {
+                        return Err("请提供有效的定位坐标".into());
+                    }
+                    if !(-90.0..=90.0).contains(&lat) || !(-180.0..=180.0).contains(&lng) {
+                        return Err("请提供有效的定位坐标".into());
+                    }
+                    let dist = fence.distance_from_center_km(lat, lng);
+                    if enforce_fence && !fence.contains(lat, lng) {
+                        return Err(format!(
+                            "签到地点需在「{}」周边{}公里内（当前距该中心约{:.2}公里）",
+                            fence.venue_name,
+                            fmt_radius(fence.radius_km),
+                            dist
+                        ));
+                    }
+                    (Some(lat), Some(lng), Some(dist))
+                }
+            };
 
         let signed_at_naive = Local::now().naive_local();
         let today = signed_at_naive.date();
@@ -125,9 +153,9 @@ impl CheckInService {
         .bind(&phone)
         .bind(&username)
         .bind(signed_at_naive)
-        .bind(lat)
-        .bind(lng)
-        .bind(dist)
+        .bind(lat_bind)
+        .bind(lng_bind)
+        .bind(dist_bind)
         .execute(&self.pool)
         .await
         .map_err(|e| {
@@ -143,7 +171,7 @@ impl CheckInService {
             phone,
             username,
             signed_at,
-            distance_km: dist,
+            distance_km: dist_bind,
         })
     }
 

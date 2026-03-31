@@ -7,8 +7,9 @@ pub struct CheckInRecord {
     pub phone: String,
     pub username: String,
     pub signed_at: DateTime<Local>,
-    /// 签到位置到围栏中心的直线距离（公里）
-    pub distance_km: f64,
+    /// 有坐标时到参考围栏中心的直线距离（公里）；开放签到未传坐标时为 `null`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub distance_km: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -17,6 +18,17 @@ pub struct SignInBody {
     pub username: String,
     pub latitude: f64,
     pub longitude: f64,
+}
+
+/// `POST /api/checkins/open`：经纬度可省略；若只传其一则拒绝。
+#[derive(Debug, Deserialize)]
+pub struct SignInOpenBody {
+    pub phone: String,
+    pub username: String,
+    #[serde(default)]
+    pub latitude: Option<f64>,
+    #[serde(default)]
+    pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Deserialize)]

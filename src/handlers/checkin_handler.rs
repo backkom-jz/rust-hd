@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse, Responder};
 
-use crate::models::{CheckInDateQuery, CheckInRecord, SignInBody};
+use crate::models::{CheckInDateQuery, CheckInRecord, SignInBody, SignInOpenBody};
 use crate::services::{CheckInService, ERR_CHECKIN_ALREADY_TODAY};
 
 pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder {
@@ -16,7 +16,11 @@ pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder 
 fn is_bad_request(msg: &str) -> bool {
     matches!(
         msg,
-        "手机号不能为空" | "用户名不能为空" | "无效的日期" | "请提供有效的定位坐标"
+        "手机号不能为空"
+            | "用户名不能为空"
+            | "无效的日期"
+            | "请提供有效的定位坐标"
+            | "纬度与经度须同时提供或同时省略"
     ) || msg.starts_with("签到地点需在")
 }
 
@@ -42,7 +46,7 @@ pub async fn sign_in(
 
 pub async fn sign_in_open(
     service: web::Data<CheckInService>,
-    body: web::Json<SignInBody>,
+    body: web::Json<SignInOpenBody>,
 ) -> impl Responder {
     respond_sign_in(service.sign_in_open(body.into_inner()).await)
 }

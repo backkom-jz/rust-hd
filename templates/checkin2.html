@@ -58,17 +58,6 @@
       letter-spacing: 0.03em;
     }
     .sub { margin: 0.4rem 0 1rem; font-size: 0.84rem; color: #3d5c50; line-height: 1.45; }
-    .open-note {
-      font-size: 0.8rem;
-      color: #1e3a5f;
-      background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(29, 78, 216, 0.08));
-      border: 1px solid rgba(37, 99, 235, 0.25);
-      border-radius: 12px;
-      padding: 0.65rem 0.75rem;
-      margin-bottom: 1.1rem;
-      line-height: 1.55;
-    }
-    .open-note strong { color: #1d4ed8; }
     nav { margin-bottom: 0.85rem; font-size: 0.88rem; }
     nav a {
       color: #1d6b52;
@@ -94,18 +83,15 @@
     }
     .geo-panel {
       border-radius: 12px;
-      border: 1px dashed rgba(37, 99, 235, 0.35);
-      background: rgba(248, 250, 255, 0.92);
-      padding: 0.7rem 0.8rem;
-      margin-bottom: 1rem;
-      font-size: 0.82rem;
-      color: #2d4a3c;
-      line-height: 1.5;
+      border: 1px dashed rgba(37, 99, 235, 0.28);
+      background: rgba(248, 250, 255, 0.88);
+      padding: 0.55rem 0.7rem;
+      margin-bottom: 0.85rem;
+      font-size: 0.78rem;
+      color: #475569;
+      line-height: 1.45;
     }
-    .geo-panel .status { font-weight: 600; color: #1d4ed8; }
-    .geo-panel.warn { border-color: #f59e0b; background: rgba(254, 243, 199, 0.35); color: #78350f; }
-    .geo-hint { font-size: 0.72rem; color: #64748b; margin-top: 0.35rem; }
-    .geo-addr { font-size: 0.76rem; color: #475569; margin-top: 0.4rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+    .geo-panel.muted { color: #94a3b8; border-style: solid; border-color: rgba(148, 163, 184, 0.45); }
     button[type="submit"] {
       width: 100%;
       padding: 0.75rem;
@@ -119,7 +105,7 @@
       letter-spacing: 0.04em;
       cursor: pointer;
       box-shadow: 0 6px 18px rgba(29, 78, 216, 0.35);
-      transition: transform 0.1s, box-shadow 0.15s, filter 0.15s;
+      transition: transform 0.1s, filter 0.15s;
     }
     button[type="submit"]:hover { filter: brightness(1.06); }
     button[type="submit"]:active { transform: scale(0.99); }
@@ -132,208 +118,113 @@
 <body>
   <div class="overlay">
     <div class="card">
-      <nav><a href="/stats">签到统计</a> · <a href="/checkin">围栏签到</a></nav>
+      <nav><a href="/stats">统计</a> · <a href="/checkin">围栏签到</a></nav>
       <div class="brand">
         <div class="pin" aria-hidden="true">✓</div>
-        <h1 id="mainHeading">开放签到</h1>
+        <h1>开放签到</h1>
       </div>
-      <p class="sub" id="subLine">不校验与场地距离，仍需获取定位；同一手机号每天仅能签到一次。</p>
-      <div class="open-note" id="refBox">
-        <strong>开放通道</strong>：服务端<strong>不拒绝</strong>任意距离的坐标；仍会保存经纬度，并记录距参考场地「<span id="venueInline">—</span>」的直线距离供统计参考。需要严格到场签到请使用<a href="/checkin">围栏签到</a>。
-      </div>
-      <div id="geoPanel" class="geo-panel warn">
-        <div class="status" id="geoStatus">正在请求定位权限…</div>
-        <div id="geoDetail"></div>
-        <div id="geoAddress" class="geo-addr" aria-live="polite"></div>
-        <div class="geo-hint" id="geoHintBase">若定位失败：请检查系统与浏览器定位权限；公网访问请使用 <strong>HTTPS</strong>。国内文字地址需在服务器配置 <code>AMAP_WEB_KEY</code>。</div>
-      </div>
+      <p class="sub">不校验距离；可不定位。每号每日一次。</p>
+      <div id="geoPanel" class="geo-panel muted">定位：尝试中…</div>
       <form id="form">
         <label for="phone">手机号</label>
-        <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="请输入手机号" required />
+        <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="手机号" required />
         <label for="username">用户名</label>
-        <input id="username" name="username" type="text" autocomplete="name" placeholder="请输入用户名" required />
-        <button type="submit" id="btn" disabled>获取定位后可签到</button>
+        <input id="username" name="username" type="text" autocomplete="name" placeholder="用户名" required />
+        <button type="submit" id="btn">提交</button>
       </form>
       <div id="msg" class="msg"></div>
     </div>
   </div>
   <script>
-    (async function () {
+    (function () {
       let centerLat = 31.1569;
       let centerLng = 121.4746;
-      let venueName = '上海东方体育中心';
+      let pos = null;
+      const geoPanel = document.getElementById('geoPanel');
+      const btn = document.getElementById('btn');
 
-      try {
-        const fr = await fetch('/api/checkins/fence');
-        if (fr.ok) {
-          const j = await fr.json();
+      fetch('/api/checkins/fence')
+        .then((r) => (r.ok ? r.json() : {}))
+        .then((j) => {
           if (typeof j.center_lat === 'number') centerLat = j.center_lat;
           if (typeof j.center_lng === 'number') centerLng = j.center_lng;
-          if (typeof j.venue === 'string' && j.venue.trim()) venueName = j.venue.trim();
-        }
-      } catch (_) { /* 使用默认 */ }
+        })
+        .catch(() => {});
 
-      document.title = venueName + ' · 开放签到';
-      document.getElementById('mainHeading').textContent = venueName + ' · 开放签到';
-      document.getElementById('venueInline').textContent = venueName;
-
-      function haversineKm(lat1, lon1, lat2, lon2) {
+      function haversineKm(a, b, c, d) {
         const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2)**2 + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2)**2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const x = (c - a) * Math.PI / 180;
+        const y = (d - b) * Math.PI / 180;
+        const s = Math.sin(x/2)**2 + Math.cos(a * Math.PI/180) * Math.cos(c * Math.PI/180) * Math.sin(y/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
       }
 
-      const geoPanel = document.getElementById('geoPanel');
-      const geoStatus = document.getElementById('geoStatus');
-      const geoDetail = document.getElementById('geoDetail');
-      const geoAddress = document.getElementById('geoAddress');
-      const btn = document.getElementById('btn');
-      let pos = null;
-
-      function isInsecureForGeo() {
-        try {
-          return location.protocol === 'http:' &&
-            location.hostname !== 'localhost' &&
-            location.hostname !== '127.0.0.1' &&
-            location.hostname !== '[::1]';
-        } catch (_) { return false; }
-      }
-
-      function mapGeoError(e) {
-        let base = '';
-        switch (e && e.code) {
-          case 1:
-            base = '已拒绝定位权限，请在浏览器或系统设置中允许本站使用「位置」。';
-            break;
-          case 2:
-            base = '暂时无法确定位置（室内信号弱或未开 GPS 时常见），请到窗边或室外重试。';
-            break;
-          case 3:
-            base = '定位超时，请确认已开启系统定位后重试。';
-            break;
-          default:
-            base = (e && e.message) ? String(e.message) : '未知错误';
-        }
-        if (isInsecureForGeo()) {
-          base += ' 【重要】当前为 HTTP 访问：多数浏览器会禁止非安全上下文定位，请改用 HTTPS 域名打开本页。';
-        }
-        return '定位失败：' + base;
-      }
-
-      async function loadReverseAddress(lat, lng) {
-        geoAddress.textContent = '正在解析附近地址…';
-        try {
-          const ar = await fetch('/api/geo/reverse?lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lng));
-          const aj = await ar.json().catch(() => ({}));
-          if (ar.ok && aj.display_name) {
-            geoAddress.textContent = '大致位置：' + String(aj.display_name);
-          } else if (aj.error) {
-            geoAddress.textContent = '文字地址未返回（' + aj.error + '），不影响提交。';
-          } else {
-            geoAddress.textContent = '未能解析文字地址，仍可提交坐标。';
-          }
-        } catch (_) {
-          geoAddress.textContent = '地址解析请求失败，仍可提交坐标。';
-        }
-      }
-
-      function setReady(lat, lng, acc) {
-        pos = { lat, lng };
-        const d = haversineKm(lat, lng, centerLat, centerLng);
-        geoPanel.classList.remove('warn');
-        geoStatus.textContent = '已获取定位，可提交（本页不校验距离）';
-        let accText = acc != null && Number.isFinite(acc) ? `（精度约 ±${Math.round(acc)} m）` : '';
-        geoDetail.textContent = '距参考点「' + venueName + '」约 ' + d.toFixed(2) + ' km（仅供参考）' + accText;
-        btn.disabled = false;
-        btn.textContent = '提交签到';
-        loadReverseAddress(lat, lng);
-      }
-
-      function setErr(text) {
-        pos = null;
-        geoPanel.classList.add('warn');
-        geoStatus.textContent = text;
-        geoDetail.textContent = '';
-        geoAddress.textContent = '';
-        btn.disabled = true;
-        btn.textContent = '获取定位后可签到';
-      }
-
-      function requestLocation() {
-        if (!navigator.geolocation) {
-          setErr('当前浏览器不支持定位');
+      function geoLine() {
+        if (!pos) {
+          geoPanel.classList.add('muted');
+          geoPanel.textContent = '定位：未获取（可直接提交）';
           return;
         }
-        if (isInsecureForGeo()) {
-          geoAddress.textContent = '提示：当前为 HTTP 非安全访问，定位可能被浏览器拦截，请使用 https:// 域名访问。';
-        }
-        const onOk = (r) => setReady(r.coords.latitude, r.coords.longitude, r.coords.accuracy);
-        const onFail = (e) => setErr(mapGeoError(e));
-        navigator.geolocation.getCurrentPosition(
-          onOk,
-          (e) => {
-            if (e.code === 2 || e.code === 3) {
-              navigator.geolocation.getCurrentPosition(onOk, onFail, {
-                enableHighAccuracy: false,
-                timeout: 24000,
-                maximumAge: 120000
-              });
-            } else {
-              onFail(e);
-            }
-          },
-          { enableHighAccuracy: true, timeout: 28000, maximumAge: 0 }
-        );
+        geoPanel.classList.remove('muted');
+        const d = haversineKm(pos.lat, pos.lng, centerLat, centerLng);
+        geoPanel.textContent = '定位：已获取（约 ' + d.toFixed(1) + ' km）';
       }
 
-      requestLocation();
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (r) => {
+            pos = { lat: r.coords.latitude, lng: r.coords.longitude };
+            geoLine();
+          },
+          () => {
+            pos = null;
+            geoLine();
+          },
+          { enableHighAccuracy: false, timeout: 12000, maximumAge: 300000 }
+        );
+      } else {
+        geoPanel.textContent = '定位：不支持（可直接提交）';
+      }
 
-      const form = document.getElementById('form');
-      const msg = document.getElementById('msg');
-      form.addEventListener('submit', async (e) => {
+      document.getElementById('form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const msg = document.getElementById('msg');
         msg.className = 'msg';
         msg.textContent = '';
-        if (!pos) {
-          msg.className = 'msg err';
-          msg.textContent = '请先完成有效定位';
-          return;
-        }
         btn.disabled = true;
+        const phone = document.getElementById('phone').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const body = { phone, username };
+        if (pos) {
+          body.latitude = pos.lat;
+          body.longitude = pos.lng;
+        }
         try {
           const res = await fetch('/api/checkins/open', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phone: document.getElementById('phone').value.trim(),
-              username: document.getElementById('username').value.trim(),
-              latitude: pos.lat,
-              longitude: pos.lng,
-            }),
+            body: JSON.stringify(body),
           });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
             msg.className = 'msg err';
-            msg.textContent = data.error || '签到失败';
+            msg.textContent = data.error || '失败';
             btn.disabled = false;
             return;
           }
           msg.className = 'msg ok';
-          const dk = data.distance_km != null ? Number(data.distance_km).toFixed(2) : '—';
-          msg.textContent = '签到成功（开放通道）！时间：' + (data.signed_at || '') + '；距参考点「' + venueName + '」约 ' + dk + ' km';
+          let t = '已签到 ' + (data.signed_at || '');
+          if (data.distance_km != null && Number.isFinite(Number(data.distance_km))) {
+            t += ' · ' + Number(data.distance_km).toFixed(1) + ' km';
+          }
+          msg.textContent = t;
           document.getElementById('phone').value = '';
           document.getElementById('username').value = '';
         } catch {
           msg.className = 'msg err';
-          msg.textContent = '网络错误，请稍后重试';
-        } finally {
-          if (pos) {
-            btn.disabled = false;
-            btn.textContent = '提交签到';
-          }
+          msg.textContent = '网络错误';
         }
+        btn.disabled = false;
       });
     })();
   </script>
