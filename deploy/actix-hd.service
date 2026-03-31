@@ -1,0 +1,20 @@
+[Unit]
+Description=actix-hd check-in service (Rust/Actix)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/actix-hd
+# 生产环境变量：DATABASE_URL / STATIC_DIR / BIND_ADDR 等（chmod 600）
+EnvironmentFile=-/opt/actix-hd/.env
+ExecStart=/opt/actix-hd/actix-hd
+Restart=on-failure
+RestartSec=5
+
+# 可选：专用用户（需先 chown -R actixhd:actixhd /opt/actix-hd）
+# User=actixhd
+# Group=actixhd
+
+[Install]
+WantedBy=multi-user.target

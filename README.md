@@ -107,3 +107,68 @@ server {
 - 使用 **`RUST_LOG=actix_web=info`**（若后续接入 `tracing`/`env_logger`）便于排查。
 - 连接池上限在 `main.rs` 的 `MySqlPoolOptions::max_connections` 可按并发调整。
 - 升级流程：停服务 → 替换二进制 → 如有迁移脚本则执行 → 启动服务。
+
+---
+
+## 生产配置实例（服务器 `47.116.213.182`，已放行 `8088`）
+
+推荐：**Nginx 监听 80（及后续 443）**，Actix 只绑定 **`127.0.0.1:8088`**。这样公网可关 `8088`，只开 `80`/`443`，由 Nginx 统一入口。
+
+### A. 服务器目录与二进制
+
+```bash
+sudo mkdir -p /opt/actix-hd/static
+# 将本仓库的 target/release/actix-hd 上传到服务器，或在该机 cargo build --release
+sudo install -m 755 actix-hd /opt/actix-hd/
+sudo cp -r src/static/* /opt/actix-hd/static/
+```
+
+### B. 环境变量 `/opt/actix-hd/.env`
+
+参考仓库内 [`deploy/production.env.example`](deploy/production.env.example)，至少包含：
+
+```env
+BIND_ADDR=127.0.0.1:8088
+STATIC_DIR=/opt/actix-hd/static
+DATABASE_URL=mysql://...
+```
+
+```bash
+sudo chmod 600 /opt/actix-hd/.env
+```
+
+### C. systemd
+
+```bash
+sudo cp deploy/actix-hd.service /etc/systemd/system/actix-hd.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now actix-hd
+sudo systemctl status actix-hd
+```
+
+确认本机可访问：`curl -sS http://127.0.0.1:8088/checkin | head`
+
+### D. Nginx
+
+```bash
+sudo cp deploy/nginx-actix-hd.conf /etc/nginx/sites-available/actix-hd
+sudo ln -sf /etc/nginx/sites-available/actix-hd /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+浏览器访问：**`http://47.116.213.182/checkin`**（走 80 端口，不再写 `:8088`）。
+
+### E. 云安全组 / 防火墙
+
+| 方案 | 需放行（入站） |
+|------|----------------|
+| **推荐（Nginx 对外）** | **TCP 80**（及 **443** 若上 HTTPS）；Actix 仅本机，**可关闭公网 8088** |
+| 不用 Nginx、直连 Actix | **TCP 8088**，且 `.env` 中 **`BIND_ADDR=0.0.0.0:8088`** |
+
+### F. 可选：仅直连 8088（无 Nginx）
+
+`.env` 使用 `BIND_ADDR=0.0.0.0:8088`，安全组放行 8088，访问 **`http://47.116.213.182:8088/checkin`**。静态资源仍须配置 **`STATIC_DIR`**。
+
+### G. MySQL（RDS）
+
+应用跑在 `47.116.213.182` 上时，RDS 安全组需允许 **该 ECS 的内网 IP**（或公网 IP，若走公网连接）访问 **3306**。连接串建议优先 **内网地址**，延迟更低、不计公网流量费。
