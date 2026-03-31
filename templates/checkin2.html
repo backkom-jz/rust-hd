@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>现场签到</title>
+  <title>开放签到</title>
   <style>
     * { box-sizing: border-box; }
     html { min-height: 100%; }
@@ -42,13 +42,13 @@
       width: 2.25rem;
       height: 2.25rem;
       border-radius: 12px;
-      background: linear-gradient(145deg, #1d6b52, #2a9d74);
+      background: linear-gradient(145deg, #2563eb, #1d4ed8);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.15rem;
-      box-shadow: 0 4px 12px rgba(29, 107, 82, 0.35);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
     }
     h1 {
       margin: 0;
@@ -58,17 +58,17 @@
       letter-spacing: 0.03em;
     }
     .sub { margin: 0.4rem 0 1rem; font-size: 0.84rem; color: #3d5c50; line-height: 1.45; }
-    .fence {
+    .open-note {
       font-size: 0.8rem;
-      color: #1a4d3aea;
-      background: linear-gradient(90deg, rgba(42, 157, 116, 0.12), rgba(29, 107, 82, 0.08));
-      border: 1px solid rgba(29, 107, 82, 0.2);
+      color: #1e3a5f;
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(29, 78, 216, 0.08));
+      border: 1px solid rgba(37, 99, 235, 0.25);
       border-radius: 12px;
       padding: 0.65rem 0.75rem;
       margin-bottom: 1.1rem;
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    .fence strong { color: #14523d; }
+    .open-note strong { color: #1d4ed8; }
     nav { margin-bottom: 0.85rem; font-size: 0.88rem; }
     nav a {
       color: #1d6b52;
@@ -94,15 +94,15 @@
     }
     .geo-panel {
       border-radius: 12px;
-      border: 1px dashed rgba(29, 107, 82, 0.35);
-      background: rgba(248, 253, 250, 0.9);
+      border: 1px dashed rgba(37, 99, 235, 0.35);
+      background: rgba(248, 250, 255, 0.92);
       padding: 0.7rem 0.8rem;
       margin-bottom: 1rem;
       font-size: 0.82rem;
       color: #2d4a3c;
       line-height: 1.5;
     }
-    .geo-panel .status { font-weight: 600; color: #14523d; }
+    .geo-panel .status { font-weight: 600; color: #1d4ed8; }
     .geo-panel.warn { border-color: #f59e0b; background: rgba(254, 243, 199, 0.35); color: #78350f; }
     .geo-hint { font-size: 0.72rem; color: #64748b; margin-top: 0.35rem; }
     .geo-addr { font-size: 0.76rem; color: #475569; margin-top: 0.4rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
@@ -110,7 +110,7 @@
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.15rem;
-      background: linear-gradient(135deg, #1d6b52 0%, #0f4d3a 100%);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       color: #fff;
       border: none;
       border-radius: 12px;
@@ -118,7 +118,7 @@
       font-weight: 700;
       letter-spacing: 0.04em;
       cursor: pointer;
-      box-shadow: 0 6px 18px rgba(15, 77, 58, 0.38);
+      box-shadow: 0 6px 18px rgba(29, 78, 216, 0.35);
       transition: transform 0.1s, box-shadow 0.15s, filter 0.15s;
     }
     button[type="submit"]:hover { filter: brightness(1.06); }
@@ -132,20 +132,20 @@
 <body>
   <div class="overlay">
     <div class="card">
-      <nav><a href="/stats">签到统计</a> · <a href="/checkin2">开放签到</a>（不限距离）</nav>
+      <nav><a href="/stats">签到统计</a> · <a href="/checkin">围栏签到</a></nav>
       <div class="brand">
-        <div class="pin" aria-hidden="true">📍</div>
-        <h1 id="mainHeading">现场签到</h1>
+        <div class="pin" aria-hidden="true">✓</div>
+        <h1 id="mainHeading">开放签到</h1>
       </div>
-      <p class="sub" id="subLine">正在加载签到范围…</p>
-      <div class="fence" id="fenceBox">
-        <strong>地理围栏</strong>：配置加载中…
+      <p class="sub" id="subLine">不校验与场地距离，仍需获取定位；同一手机号每天仅能签到一次。</p>
+      <div class="open-note" id="refBox">
+        <strong>开放通道</strong>：服务端<strong>不拒绝</strong>任意距离的坐标；仍会保存经纬度，并记录距参考场地「<span id="venueInline">—</span>」的直线距离供统计参考。需要严格到场签到请使用<a href="/checkin">围栏签到</a>。
       </div>
       <div id="geoPanel" class="geo-panel warn">
         <div class="status" id="geoStatus">正在请求定位权限…</div>
         <div id="geoDetail"></div>
         <div id="geoAddress" class="geo-addr" aria-live="polite"></div>
-        <div class="geo-hint" id="geoHintBase">若定位失败：请检查系统与浏览器定位权限；公网访问请使用 <strong>HTTPS</strong>（Chrome 等在 HTTP 下常无法定位）。国内文字地址需在服务器配置 <code>AMAP_WEB_KEY</code>（高德 Web 服务 Key）。</div>
+        <div class="geo-hint" id="geoHintBase">若定位失败：请检查系统与浏览器定位权限；公网访问请使用 <strong>HTTPS</strong>。国内文字地址需在服务器配置 <code>AMAP_WEB_KEY</code>。</div>
       </div>
       <form id="form">
         <label for="phone">手机号</label>
@@ -161,21 +161,7 @@
     (async function () {
       let centerLat = 31.1569;
       let centerLng = 121.4746;
-      let radiusKm = 5;
       let venueName = '上海东方体育中心';
-
-      function escapeHtml(s) {
-        if (s == null || s === '') return '';
-        const d = document.createElement('div');
-        d.textContent = s;
-        return d.innerHTML;
-      }
-
-      function fmtRadiusKm(k) {
-        if (typeof k !== 'number' || !Number.isFinite(k)) return '5';
-        if (Math.abs(k - Math.round(k)) < 1e-6) return String(Math.round(k));
-        return k.toFixed(1);
-      }
 
       try {
         const fr = await fetch('/api/checkins/fence');
@@ -183,19 +169,13 @@
           const j = await fr.json();
           if (typeof j.center_lat === 'number') centerLat = j.center_lat;
           if (typeof j.center_lng === 'number') centerLng = j.center_lng;
-          if (typeof j.radius_km === 'number') radiusKm = j.radius_km;
           if (typeof j.venue === 'string' && j.venue.trim()) venueName = j.venue.trim();
         }
       } catch (_) { /* 使用默认 */ }
 
-      document.title = venueName + ' · 现场签到';
-      document.getElementById('mainHeading').textContent = venueName + ' · 现场签到';
-      document.getElementById('subLine').innerHTML =
-        '仅限身在 <strong>' + escapeHtml(venueName) + '</strong> 附近的到场签到';
-      document.getElementById('fenceBox').innerHTML =
-        '<strong>地理围栏</strong>：以 <strong>' + escapeHtml(venueName) + '</strong> 为中心，半径 <strong>' +
-        escapeHtml(fmtRadiusKm(radiusKm)) + '</strong> 公里（WGS84 球面距离）。<br />' +
-        '请先允许浏览器获取定位，再提交；服务端将复核距离。';
+      document.title = venueName + ' · 开放签到';
+      document.getElementById('mainHeading').textContent = venueName + ' · 开放签到';
+      document.getElementById('venueInline').textContent = venueName;
 
       function haversineKm(lat1, lon1, lat2, lon2) {
         const R = 6371;
@@ -250,27 +230,24 @@
           if (ar.ok && aj.display_name) {
             geoAddress.textContent = '大致位置：' + String(aj.display_name);
           } else if (aj.error) {
-            geoAddress.textContent = '文字地址未返回（' + aj.error + '），不影响按坐标签到。';
+            geoAddress.textContent = '文字地址未返回（' + aj.error + '），不影响提交。';
           } else {
-            geoAddress.textContent = '未能解析文字地址，仍可根据坐标签到。';
+            geoAddress.textContent = '未能解析文字地址，仍可提交坐标。';
           }
         } catch (_) {
-          geoAddress.textContent = '地址解析请求失败，仍可根据坐标签到。';
+          geoAddress.textContent = '地址解析请求失败，仍可提交坐标。';
         }
       }
 
       function setReady(lat, lng, acc) {
         pos = { lat, lng };
         const d = haversineKm(lat, lng, centerLat, centerLng);
-        const inside = d <= radiusKm + 0.001;
-        geoPanel.classList.toggle('warn', !inside);
-        geoStatus.textContent = inside
-          ? '已在允许范围内，可以签到'
-          : ('当前位置超出围栏范围（半径 ' + fmtRadiusKm(radiusKm) + ' km），无法签到');
+        geoPanel.classList.remove('warn');
+        geoStatus.textContent = '已获取定位，可提交（本页不校验距离）';
         let accText = acc != null && Number.isFinite(acc) ? `（精度约 ±${Math.round(acc)} m）` : '';
-        geoDetail.textContent = '距「' + venueName + '」中心约 ' + d.toFixed(2) + ' km' + accText;
-        btn.disabled = !inside;
-        btn.textContent = inside ? '提交签到' : '位置不在围栏内';
+        geoDetail.textContent = '距参考点「' + venueName + '」约 ' + d.toFixed(2) + ' km（仅供参考）' + accText;
+        btn.disabled = false;
+        btn.textContent = '提交签到';
         loadReverseAddress(lat, lng);
       }
 
@@ -326,7 +303,7 @@
         }
         btn.disabled = true;
         try {
-          const res = await fetch('/api/checkins', {
+          const res = await fetch('/api/checkins/open', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -345,7 +322,7 @@
           }
           msg.className = 'msg ok';
           const dk = data.distance_km != null ? Number(data.distance_km).toFixed(2) : '—';
-          msg.textContent = '签到成功！时间：' + (data.signed_at || '') + '；距「' + venueName + '」中心约 ' + dk + ' km';
+          msg.textContent = '签到成功（开放通道）！时间：' + (data.signed_at || '') + '；距参考点「' + venueName + '」约 ' + dk + ' km';
           document.getElementById('phone').value = '';
           document.getElementById('username').value = '';
         } catch {
@@ -353,10 +330,8 @@
           msg.textContent = '网络错误，请稍后重试';
         } finally {
           if (pos) {
-            const d = haversineKm(pos.lat, pos.lng, centerLat, centerLng);
-            const inside = d <= radiusKm + 0.001;
-            btn.disabled = !inside;
-            btn.textContent = inside ? '提交签到' : '位置不在围栏内';
+            btn.disabled = false;
+            btn.textContent = '提交签到';
           }
         }
       });

@@ -58,7 +58,17 @@ impl CheckInService {
         }))
     }
 
+    /// 校验地理围栏后写入：页面 `/checkin`，接口 `POST /api/checkins`。
     pub async fn sign_in(&self, body: SignInBody) -> Result<CheckInRecord, String> {
+        self.sign_in_inner(body, true).await
+    }
+
+    /// 不校验与围栏距离，仍写入坐标及距参考中心的公里数（仅展示）；页面 `/checkin2`，接口 `POST /api/checkins/open`。
+    pub async fn sign_in_open(&self, body: SignInBody) -> Result<CheckInRecord, String> {
+        self.sign_in_inner(body, false).await
+    }
+
+    async fn sign_in_inner(&self, body: SignInBody, enforce_fence: bool) -> Result<CheckInRecord, String> {
         let fence = self.get_fence().await;
 
         let phone = body.phone.trim().to_string();
@@ -80,7 +90,7 @@ impl CheckInService {
         }
 
         let dist = fence.distance_from_center_km(lat, lng);
-        if !fence.contains(lat, lng) {
+        if enforce_fence && !fence.contains(lat, lng) {
             return Err(format!(
                 "签到地点需在「{}」周边{}公里内（当前距该中心约{:.2}公里）",
                 fence.venue_name,
