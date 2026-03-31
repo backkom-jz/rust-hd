@@ -226,3 +226,22 @@ sudo nginx -t && sudo systemctl reload nginx
 ### G. MySQL（RDS）
 
 应用跑在 `47.116.213.182` 上时，RDS 安全组需允许 **该 ECS 的内网 IP**（或公网 IP，若走公网连接）访问 **3306**。连接串建议优先 **内网地址**，延迟更低、不计公网流量费。
+
+---
+
+## 生产域名：`https://www.bengzi.cn:8088/`
+
+1. **`.env`**：使用 Nginx 在本机 **8088** 做 HTTPS 时，**不要**再让 Actix 监听 `8088`（会端口冲突）。推荐：
+   - `BIND_ADDR=127.0.0.1:18088`
+   - `STATIC_DIR=/opt/actix-hd/static`
+   - 数据库、`AMAP_WEB_KEY` 等按前述配置
+
+2. **Nginx**：使用仓库内 [`deploy/nginx-bengzi.cn.conf`](deploy/nginx-bengzi.cn.conf)，其中 `upstream` 指向 **`127.0.0.1:18088`**，与上面 `BIND_ADDR` 一致。示例证书路径为 `/etc/ssl/certs/www.bengzi.cn.pem` 与 `.key`，若你使用 Let’s Encrypt 等请改成对应 `fullchain.pem` / `privkey.pem`。**常见错误**：`server_name` 不要写端口（如 `www.bengzi.cn:8088`）；不要在 Nginx 已 `listen 8088` 时仍把 `proxy_pass` 指到本机 `8088`（会与 Actix 抢端口）。
+
+3. **证书**：Let’s Encrypt 等通常先占用 **80** 或 **443** 校验；若仅开放 **8088**，需按所用 CA 说明操作（例如 DNS 校验、或临时开放 80）。
+
+4. **安全组 / 防火墙**：放行 **TCP 8088**（HTTPS）。若改为标准 **443** 无端口访问，见该文件内「方案 B」注释。
+
+5. **定位**：HTTPS 已满足浏览器地理定位的**安全上下文**要求；高德 Key 若设 **HTTP  referer** 白名单，请加入 `https://www.bengzi.cn/*`（及带端口形式若需）。
+
+6. **访问**：部署完成后打开 `https://www.bengzi.cn:8088/checkin` 与 `https://www.bengzi.cn:8088/stats`。

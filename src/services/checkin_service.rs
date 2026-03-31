@@ -1,6 +1,9 @@
 use chrono::{DateTime, Local, NaiveDateTime};
 use sqlx::{MySqlPool, Row};
 
+/// 与围栏、坐标校验等并列的业务错误文案；供 handler 映射 HTTP 状态码。
+pub const ERR_CHECKIN_ALREADY_TODAY: &str = "今日已签到，同一手机号每天只能签到一次";
+
 use crate::geo::Fence;
 use crate::models::{
     CheckInDateQuery, CheckInRecord, CheckInSignerRow, CheckInStatsResponse, SignInBody,
@@ -87,6 +90,23 @@ impl CheckInService {
         }
 
         let signed_at_naive = Local::now().naive_local();
+        let today = signed_at_naive.date();
+
+        let cnt: i64 = sqlx::query_scalar(
+            r#"SELECT COUNT(*) FROM check_ins WHERE phone = ? AND DATE(signed_at) = ?"#,
+        )
+        .bind(&phone)
+        .bind(today)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| {
+            eprintln!("check_ins daily duplicate check: {e}");
+            "数据库查询失败".to_string()
+        })?;
+
+        if cnt > 0 {
+            return Err(ERR_CHECKIN_ALREADY_TODAY.into());
+        }
 
         let res = sqlx::query(
             r#"INSERT INTO check_ins (phone, username, signed_at, latitude, longitude, distance_km)

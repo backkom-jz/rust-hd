@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse, Responder};
 
 use crate::models::{CheckInDateQuery, SignInBody};
-use crate::services::CheckInService;
+use crate::services::{CheckInService, ERR_CHECKIN_ALREADY_TODAY};
 
 pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder {
     let f = service.get_fence().await;
@@ -26,6 +26,9 @@ pub async fn sign_in(
 ) -> impl Responder {
     match service.sign_in(body.into_inner()).await {
         Ok(record) => HttpResponse::Created().json(record),
+        Err(msg) if msg == ERR_CHECKIN_ALREADY_TODAY => {
+            HttpResponse::Conflict().json(serde_json::json!({ "error": msg }))
+        }
         Err(msg) if is_bad_request(&msg) => {
             HttpResponse::BadRequest().json(serde_json::json!({ "error": msg }))
         }
