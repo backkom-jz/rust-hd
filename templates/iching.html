@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>周易抽签</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", "Songti SC", "SimSun", serif;
+      color: #1c1917;
+      background: #110d16 radial-gradient(ellipse 130% 95% at 50% -10%, #38284a 0%, #1a1520 52%, #0d0b12 100%) fixed;
+    }
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 450px;
+      padding: 1.6rem 1.25rem 1.35rem;
+      border-radius: 20px;
+      background: linear-gradient(165deg, rgba(255,252,245,0.98) 0%, rgba(246,241,230,0.99) 100%);
+      box-shadow:
+        0 24px 58px rgba(0,0,0,0.45),
+        0 0 0 1px rgba(180,160,120,0.38) inset;
+    }
+    nav { margin-bottom: 0.9rem; font-size: 0.84rem; }
+    nav a { color: #7c6f64; text-decoration: none; }
+    nav a:hover { color: #575279; text-decoration: underline; }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #292524;
+      letter-spacing: 0.12em;
+    }
+    .sub {
+      margin: 0 0 1rem;
+      font-size: 0.78rem;
+      color: #78716c;
+    }
+    .oracle {
+      border-radius: 14px;
+      padding: 0.9rem 0.8rem;
+      background: linear-gradient(160deg, rgba(58,39,25,0.06), rgba(100,75,45,0.1));
+      border: 1px solid rgba(125,95,55,0.2);
+    }
+    .tube-stage {
+      height: 116px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: 0.55rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .spark-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 4;
+    }
+    .spark {
+      position: absolute;
+      left: 50%;
+      bottom: 56px;
+      width: 7px;
+      height: 7px;
+      margin-left: -3.5px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff7b0 0%, #f9cf5f 55%, rgba(249, 207, 95, 0.15) 100%);
+      opacity: 0;
+      filter: drop-shadow(0 0 6px rgba(255, 210, 70, 0.75));
+    }
+    .spark-layer.burst .spark {
+      animation: sparkFly 0.56s ease-out forwards;
+      animation-delay: var(--delay, 0ms);
+    }
+    @keyframes sparkFly {
+      0% { transform: translate(0, 0) scale(0.55); opacity: 0; }
+      12% { opacity: 1; }
+      100% {
+        transform: translate(var(--dx, 0px), var(--dy, -52px)) scale(0.08);
+        opacity: 0;
+      }
+    }
+    .tube {
+      width: 84px;
+      height: 96px;
+      border-radius: 14px 14px 10px 10px;
+      background: linear-gradient(180deg, #7a5538 0%, #5a3e2b 48%, #3f2a1f 100%);
+      border: 2px solid rgba(59, 34, 18, 0.55);
+      box-shadow: 0 10px 18px rgba(50, 25, 12, 0.3);
+      position: relative;
+      transform-origin: 50% 85%;
+    }
+    .tube::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 8px;
+      height: 10px;
+      border-radius: 8px;
+      background: rgba(255, 248, 235, 0.22);
+    }
+    .tube.shaking {
+      animation: tubeShake 0.16s ease-in-out infinite;
+    }
+    @keyframes tubeShake {
+      0%, 100% { transform: rotate(0); }
+      25% { transform: rotate(-5deg); }
+      50% { transform: rotate(4deg); }
+      75% { transform: rotate(-3deg); }
+    }
+    .stick {
+      position: absolute;
+      bottom: 22px;
+      width: 16px;
+      height: 82px;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f7e7c6 0%, #e7c98d 58%, #d8b273 100%);
+      border: 1px solid rgba(105, 74, 38, 0.25);
+      color: #69431f;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 6px;
+      transform-origin: 50% 100%;
+      transform: translateY(56px);
+      transition: transform 0.2s ease;
+      box-shadow: 0 8px 14px rgba(53, 30, 12, 0.2);
+    }
+    .stick.out {
+      animation: slipOut 0.92s cubic-bezier(.2,.75,.2,1) forwards;
+    }
+    @keyframes slipOut {
+      0% { transform: translateY(56px) rotate(0deg); }
+      66% { transform: translateY(-88px) rotate(0deg); }
+      78% { transform: translateY(-78px) rotate(2deg); }
+      88% { transform: translateY(-85px) rotate(-1.6deg); }
+      100% { transform: translateY(-82px) rotate(0.2deg); }
+    }
+    .draw-btn {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      color: #faf8f5;
+      background: linear-gradient(135deg, #52453b 0%, #1d1916 100%);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+      transition: transform 0.12s, filter 0.15s;
+    }
+    .draw-btn:hover { filter: brightness(1.08); }
+    .draw-btn:active { transform: scale(0.98); }
+    .draw-btn:disabled { opacity: 0.7; cursor: wait; }
+    .loading {
+      margin-top: 0.45rem;
+      font-size: 0.74rem;
+      color: #8a7a64;
+      text-align: center;
+      min-height: 1rem;
+    }
+    .result {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(120,100,80,0.2);
+      min-height: 260px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .result.show { opacity: 1; transform: translateY(0); }
+    .result.reveal { animation: reveal 0.45s ease; }
+    .result.rolling .glyph { animation: shake 0.5s ease infinite; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px) rotate(-1deg); }
+      40% { transform: translateX(6px) rotate(1deg); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    @keyframes reveal {
+      0% { transform: perspective(700px) rotateX(-18deg) translateY(10px); opacity: 0.2; }
+      100% { transform: perspective(700px) rotateX(0) translateY(0); opacity: 1; }
+    }
+    .glyph {
+      font-size: 4.4rem;
+      line-height: 1;
+      text-align: center;
+      margin-bottom: 0.35rem;
+      color: #292524;
+      text-shadow: 0 4px 14px rgba(50,30,18,0.15);
+    }
+    .title-row {
+      text-align: center;
+      margin-bottom: 0.8rem;
+    }
+    .title-row .no { font-size: 0.9rem; color: #78716c; margin-bottom: 0.2rem; }
+    .title-row .name { font-size: 1.65rem; font-weight: 800; color: #1c1917; letter-spacing: 0.15em; }
+    .title-row .py { font-size: 0.75rem; color: #a8a29e; margin-top: 0.25rem; }
+    .lines {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+      margin: 0 auto;
+      max-width: 200px;
+    }
+    .line {
+      width: 100%;
+      height: 10px;
+      border-radius: 2px;
+      background: #1c1917;
+      display: flex;
+      gap: 14%;
+      justify-content: center;
+    }
+    .line.yin {
+      background: transparent;
+      gap: 8%;
+    }
+    .line.yin span {
+      flex: 1;
+      max-width: 42%;
+      height: 100%;
+      background: #1c1917;
+      border-radius: 2px;
+    }
+    .exp {
+      margin-top: 0.95rem;
+      padding: 0.75rem 0.8rem;
+      border-radius: 10px;
+      background: rgba(120, 96, 60, 0.08);
+      border: 1px solid rgba(120, 96, 60, 0.18);
+    }
+    .exp h3 {
+      margin: 0 0 0.35rem;
+      font-size: 0.82rem;
+      color: #5b4a31;
+    }
+    .exp p {
+      margin: 0;
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: #3b2f22;
+    }
+    .adv {
+      margin-top: 0.65rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .box {
+      border-radius: 10px;
+      padding: 0.55rem 0.62rem;
+      border: 1px solid rgba(92, 120, 70, 0.25);
+      background: rgba(212, 245, 210, 0.38);
+    }
+    .box h4 {
+      margin: 0 0 0.25rem;
+      font-size: 0.8rem;
+      color: #315e36;
+    }
+    .box p {
+      margin: 0;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: #2c4730;
+    }
+    .box.avoid {
+      border-color: rgba(164, 100, 84, 0.25);
+      background: rgba(255, 230, 225, 0.45);
+    }
+    .box.avoid h4 { color: #7f3426; }
+    .box.avoid p { color: #633226; }
+    .hint {
+      margin-top: 0.7rem;
+      font-size: 0.72rem;
+      color: #a8a29e;
+      text-align: center;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <nav><a href="/">首页</a> · <a href="/checkin">围栏签到</a> · <a href="/checkin2">开放签到</a> · <a href="/stats">统计</a></nav>
+      <h1>周易六十四卦</h1>
+      <p class="sub">文王卦序 · 随机一卦（娱乐参考）</p>
+      <div class="oracle">
+        <div class="tube-stage">
+          <div class="spark-layer" id="sparkLayer" aria-hidden="true">
+            <span class="spark" style="--dx:-46px; --dy:-54px; --delay:0ms"></span>
+            <span class="spark" style="--dx:-32px; --dy:-72px; --delay:20ms"></span>
+            <span class="spark" style="--dx:-12px; --dy:-86px; --delay:40ms"></span>
+            <span class="spark" style="--dx:14px; --dy:-82px; --delay:30ms"></span>
+            <span class="spark" style="--dx:34px; --dy:-64px; --delay:60ms"></span>
+            <span class="spark" style="--dx:48px; --dy:-46px; --delay:10ms"></span>
+            <span class="spark" style="--dx:-20px; --dy:-98px; --delay:25ms"></span>
+            <span class="spark" style="--dx:2px; --dy:-106px; --delay:35ms"></span>
+          </div>
+          <div class="tube" id="tube">
+            <div class="stick" id="stick">签</div>
+          </div>
+        </div>
+        <button type="button" class="draw-btn" id="draw">开始摇签</button>
+        <div class="loading" id="loading"></div>
+      </div>
+      <div class="result" id="result" aria-live="polite">
+        <div class="glyph" id="glyph">☯</div>
+        <div class="title-row">
+          <div class="no" id="no">第 ? 卦</div>
+          <div class="name" id="name">未抽签</div>
+          <div class="py" id="py">-</div>
+        </div>
+        <div class="lines" id="lines"></div>
+        <div class="exp">
+          <h3>卦象解释</h3>
+          <p id="exp">点击“开始摇签”获取今日一卦。</p>
+        </div>
+        <div class="adv">
+          <div class="box">
+            <h4>宜</h4>
+            <p id="yi">守正、谨言、稳步推进。</p>
+          </div>
+          <div class="box avoid">
+            <h4>忌</h4>
+            <p id="ji">急进、冲动、失信轻诺。</p>
+          </div>
+        </div>
+        <p class="hint">六爻自上而下；阳爻为整画，阴爻为断画。仅作文化体验参考。</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    /* 文王序；binary 字符串自上而下（上爻→初爻），与常见数据集一致 */
+    const GUAS = [
+      [1,"乾","111111","䷀","qián"],
+      [2,"坤","000000","䷁","kūn"],
+      [3,"屯","010001","䷂","zhūn"],
+      [4,"蒙","100010","䷃","méng"],
+      [5,"需","010111","䷄","xū"],
+      [6,"讼","111010","䷅","sòng"],
+      [7,"师","000010","䷆","shī"],
+      [8,"比","010000","䷇","bǐ"],
+      [9,"小畜","110111","䷈","xiǎo xù"],
+      [10,"履","111011","䷉","lǚ"],
+      [11,"泰","000111","䷊","tài"],
+      [12,"否","111000","䷋","pǐ"],
+      [13,"同人","111101","䷌","tóng rén"],
+      [14,"大有","101111","䷍","dà yǒu"],
+      [15,"谦","000100","䷎","qiān"],
+      [16,"豫","001000","䷏","yù"],
+      [17,"随","011001","䷐","suí"],
+      [18,"蛊","100110","䷑","gǔ"],
+      [19,"临","000011","䷒","lín"],
+      [20,"观","110000","䷓","guān"],
+      [21,"噬嗑","101001","䷔","shì kè"],
+      [22,"贲","100101","䷕","bì"],
+      [23,"剥","100000","䷖","bō"],
+      [24,"复","000001","䷗","fù"],
+      [25,"无妄","111001","䷘","wú wàng"],
+      [26,"大畜","100111","䷙","dà xù"],
+      [27,"颐","100001","䷚","yí"],
+      [28,"大过","011110","䷛","dà guò"],
+      [29,"坎","010010","䷜","kǎn"],
+      [30,"离","101101","䷝","lí"],
+      [31,"咸","011100","䷞","xián"],
+      [32,"恒","001110","䷟","héng"],
+      [33,"遁","111100","䷠","dùn"],
+      [34,"大壮","001111","䷡","dà zhuàng"],
+      [35,"晋","101000","䷢","jìn"],
+      [36,"明夷","000101","䷣","míng yí"],
+      [37,"家人","110101","䷤","jiā rén"],
+      [38,"睽","101011","䷥","kuí"],
+      [39,"蹇","010100","䷦","jiǎn"],
+      [40,"解","001010","䷧","xiè"],
+      [41,"损","100011","䷨","sǔn"],
+      [42,"益","110001","䷩","yì"],
+      [43,"夬","011111","䷪","guài"],
+      [44,"姤","111110","䷫","gòu"],
+      [45,"萃","011000","䷬","cuì"],
+      [46,"升","000110","䷭","shēng"],
+      [47,"困","011010","䷮","kùn"],
+      [48,"井","010110","䷯","jǐng"],
+      [49,"革","011101","䷰","gé"],
+      [50,"鼎","101110","䷱","dǐng"],
+      [51,"震","001001","䷲","zhèn"],
+      [52,"艮","100100","䷳","gèn"],
+      [53,"渐","110100","䷴","jiàn"],
+      [54,"归妹","001011","䷵","guī mèi"],
+      [55,"丰","001101","䷶","fēng"],
+      [56,"旅","101100","䷷","lǚ"],
+      [57,"巽","110110","䷸","xùn"],
+      [58,"兑","011011","䷹","duì"],
+      [59,"涣","110010","䷺","huàn"],
+      [60,"节","010011","䷻","jié"],
+      [61,"中孚","110011","䷼","zhōng fú"],
+      [62,"小过","001100","䷽","xiǎo guò"],
+      [63,"既济","010101","䷾","jì jì"],
+      [64,"未济","101010","䷿","wèi jì"]
+    ];
+
+    const META = {
+      1:{exp:"乾为天，刚健自强，宜以正道开局。",yi:"立志、担责、开创",ji:"刚愎、逞强、独断"},
+      2:{exp:"坤为地，厚德承载，以柔顺配合大局。",yi:"协作、包容、蓄力",ji:"消极、拖延、失主见"},
+      3:{exp:"屯卦主起步艰难，先立秩序再求快。",yi:"打基础、定流程、求助",ji:"冒进、频繁换方向"},
+      4:{exp:"蒙卦重启蒙，宜学习请教，戒自以为是。",yi:"学习、复盘、求师",ji:"武断、好面子、闭门造车"},
+      5:{exp:"需卦曰待时，蓄势待机胜于躁进。",yi:"等待时机、储备资源",ji:"焦虑决策、空耗精力"},
+      6:{exp:"讼卦示争端，先求和解再分是非。",yi:"沟通、留证据、守法",ji:"意气之争、口舌升级"},
+      7:{exp:"师卦重纪律，统一目标方可成事。",yi:"立规矩、协同执行",ji:"各行其是、管理失序"},
+      8:{exp:"比卦主亲比，择善而从，重信重义。",yi:"结盟、互助、稳关系",ji:"盲从、圈层排他"},
+      9:{exp:"小畜小有积累，日拱一卒见功。",yi:"积累、完善细节",ji:"急于求成、轻视小事"},
+      10:{exp:"履卦如履虎尾，守礼慎行可无咎。",yi:"守规则、谨慎推进",ji:"越界、轻慢风险"},
+      11:{exp:"泰卦通达，上下交泰，宜乘势而为。",yi:"拓展、协作、利他",ji:"安逸自满、忽略隐患"},
+      12:{exp:"否卦闭塞，宜内修内整，待机转势。",yi:"降本、整顿、修身",ji:"硬碰硬、怨天尤人"},
+      13:{exp:"同人重同心，公正公开得众力。",yi:"组队、透明协作",ji:"小团体、偏私"},
+      14:{exp:"大有主丰盛，越有资源越要克己。",yi:"分享成果、优化配置",ji:"铺张、傲慢"},
+      15:{exp:"谦卦贵谦，低调反得助力。",yi:"谦逊、让功、稳进",ji:"争功、轻人"},
+      16:{exp:"豫卦主悦，先定节奏再求欢畅。",yi:"激励团队、预先准备",ji:"贪乐松懈、过度承诺"},
+      17:{exp:"随卦重顺势，跟对方向更省力。",yi:"顺势调整、跟进机遇",ji:"逆势硬顶、随波逐流"},
+      18:{exp:"蛊卦治弊，旧疾需果断整治。",yi:"修复漏洞、制度升级",ji:"掩盖问题、拖延"},
+      19:{exp:"临卦将近，宜亲临一线察实情。",yi:"走近用户、现场决策",ji:"高高在上、脱离实际"},
+      20:{exp:"观卦重观察，先看清再出手。",yi:"调研、审势、沉着",ji:"主观臆断、仓促行动"},
+      21:{exp:"噬嗑卦断而后通，规则要有牙齿。",yi:"明奖惩、纠偏执纪",ji:"和稀泥、优柔寡断"},
+      22:{exp:"贲卦为饰，文质并重，实质先于包装。",yi:"优化表达、打磨体验",ji:"华而不实、表演用力"},
+      23:{exp:"剥卦示剥落，宜收缩防守，保存元气。",yi:"止损、简化、守本",ji:"扩张、冒险投资"},
+      24:{exp:"复卦一阳来复，知错能改即吉。",yi:"回归初心、及时纠偏",ji:"执迷不悟、反复犯错"},
+      25:{exp:"无妄贵真诚，守正不妄动。",yi:"实事求是、正心正行",ji:"投机侥幸、虚假包装"},
+      26:{exp:"大畜重蓄养，厚积方可薄发。",yi:"学习储备、延迟满足",ji:"急于兑现、盲目扩张"},
+      27:{exp:"颐卦主养，先养德养气后谋事。",yi:"健康作息、补充知识",ji:"口舌是非、过度消耗"},
+      28:{exp:"大过为承重过大，当立支点与取舍。",yi:"聚焦关键、重构负担",ji:"逞强硬扛、贪多求全"},
+      29:{exp:"坎卦重险，谨慎行事、重预案。",yi:"风控、备份、守中",ji:"侥幸、冒险、孤注一掷"},
+      30:{exp:"离卦为明，依附正道则光明可久。",yi:"清晰表达、树立标准",ji:"虚火、急躁"},
+      31:{exp:"咸卦主感应，以诚相待可得回应。",yi:"真诚沟通、建立共识",ji:"操控他人、情绪绑架"},
+      32:{exp:"恒卦重恒常，贵在长期主义。",yi:"坚持、复利、守约",ji:"三分钟热度、朝令夕改"},
+      33:{exp:"遁卦示退，退一步是战略，不是认输。",yi:"撤退重整、避锋芒",ji:"硬撑、意气用事"},
+      34:{exp:"大壮有力，越强越要守礼。",yi:"果断执行、行正道",ji:"恃强凌弱、蛮干"},
+      35:{exp:"晋卦主进，明德向上，稳中求快。",yi:"展示能力、争取机会",ji:"急功近利、抢风头"},
+      36:{exp:"明夷卦晦明，艰时宜藏锋守志。",yi:"低调、护核心、耐心",ji:"逞能、泄密"},
+      37:{exp:"家人卦重内治，先齐其家后治其事。",yi:"分工、家风、职责清晰",ji:"越位、失序"},
+      38:{exp:"睽卦主异，求同存异方能共事。",yi:"对齐底线、尊重差异",ji:"针锋相对、贴标签"},
+      39:{exp:"蹇卦示难，慢一点比错一步好。",yi:"绕道、求援、稳步",ji:"硬闯、单打独斗"},
+      40:{exp:"解卦主解散束缚，先解压再前行。",yi:"化解误会、释放压力",ji:"翻旧账、再制造矛盾"},
+      41:{exp:"损卦有舍有得，减法常是转机。",yi:"减负、去冗、聚焦",ji:"贪多、浪费资源"},
+      42:{exp:"益卦主增益，利他反得其利。",yi:"帮助他人、投资成长",ji:"短视、自利过度"},
+      43:{exp:"夬卦宜决断，关键时刻当断则断。",yi:"立边界、果决执行",ji:"拖泥带水、优柔寡断"},
+      44:{exp:"姤卦遇合，机缘虽来亦须辨真伪。",yi:"把握机会、审慎结盟",ji:"一见即信、冲动合作"},
+      45:{exp:"萃卦主聚众，先立公义再聚资源。",yi:"组织协同、凝聚共识",ji:"拉帮结派、空喊口号"},
+      46:{exp:"升卦主上升，循序渐进更稳。",yi:"持续精进、稳步上台阶",ji:"跳级冒进、急躁"},
+      47:{exp:"困卦示受困，守心守志，困中求通。",yi:"节流、求助、韬光",ji:"抱怨、破罐破摔"},
+      48:{exp:"井卦主滋养，维护长期价值系统。",yi:"修基础设施、长期服务",ji:"临时抱佛脚、饮鸩止渴"},
+      49:{exp:"革卦主变革，顺时而变且先立新法。",yi:"改革、更新机制",ji:"只破不立、反复横跳"},
+      50:{exp:"鼎卦主定器，确立新秩序并养贤。",yi:"建制度、用人才、稳运营",ji:"朝令夕改、轻慢人才"},
+      51:{exp:"震卦有惊，动中守正可转危为机。",yi:"快速响应、整队再发",ji:"慌乱失措、过度反应"},
+      52:{exp:"艮卦为止，知止才能再进。",yi:"暂停、复盘、守边界",ji:"执拗、过度忙碌"},
+      53:{exp:"渐卦重渐进，小步快跑而不乱序。",yi:"长期规划、循序推进",ji:"跨级跳跃、急功近利"},
+      54:{exp:"归妹示位不正，先正其位再谋发展。",yi:"厘清角色、守分寸",ji:"越位决策、关系用事"},
+      55:{exp:"丰卦盛大，繁盛时更要防衰。",yi:"未雨绸缪、留余地",ji:"狂飙突进、铺张冒进"},
+      56:{exp:"旅卦在外，宜守礼节、慎承诺。",yi:"灵活适应、轻装上阵",ji:"漂浮无根、轻信他人"},
+      57:{exp:"巽卦入木，润物细无声。",yi:"耐心沟通、持续渗透",ji:"强压、粗暴推进"},
+      58:{exp:"兑卦主悦，和悦能聚人心。",yi:"鼓励、共赢、正向反馈",ji:"口惠而实不至、取悦过度"},
+      59:{exp:"涣卦先散后聚，先解心结再聚力。",yi:"化解隔阂、重建信任",ji:"强行统一、压制情绪"},
+      60:{exp:"节卦重节制，规则即护城河。",yi:"定边界、控预算、守时",ji:"放纵、无序扩张"},
+      61:{exp:"中孚以诚感人，诚信是最强背书。",yi:"守信、坦诚、兑现承诺",ji:"欺瞒、反复无常"},
+      62:{exp:"小过宜小事可行，大事宜谨。",yi:"先做小步验证、补细节",ji:"大跨步豪赌、逞强"},
+      63:{exp:"既济已成，功成更需戒满。",yi:"复盘、固化成果、查漏",ji:"自满松懈、忽视收尾"},
+      64:{exp:"未济未成，结尾阶段更要稳。",yi:"耐心收官、分段达成",ji:"临门急躁、半途而废"}
+    };
+
+    function renderLines(binStr) {
+      const el = document.getElementById('lines');
+      el.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const yang = binStr.charAt(i) === '1';
+        const row = document.createElement('div');
+        row.className = 'line' + (yang ? ' yang' : ' yin');
+        if (!yang) {
+          row.appendChild(document.createElement('span'));
+          row.appendChild(document.createElement('span'));
+        }
+        el.appendChild(row);
+      }
+    }
+
+    function meta(no) {
+      return META[no] || {
+        exp: "守正谨慎，先稳住节奏再行动。",
+        yi: "审势、协作、稳步推进",
+        ji: "冲动、逞强、失信"
+      };
+    }
+
+    function show(g, rolling) {
+      const [n, cn, bin, sym, py] = g;
+      document.getElementById('glyph').textContent = sym;
+      document.getElementById('no').textContent = '第 ' + n + ' 卦';
+      document.getElementById('name').textContent = cn;
+      document.getElementById('py').textContent = py;
+      const m = meta(n);
+      document.getElementById('exp').textContent = m.exp;
+      document.getElementById('yi').textContent = m.yi;
+      document.getElementById('ji').textContent = m.ji;
+      renderLines(bin);
+      const r = document.getElementById('result');
+      r.classList.add('show');
+      if (!rolling) {
+        r.classList.add('reveal');
+        setTimeout(() => r.classList.remove('reveal'), 500);
+      }
+    }
+
+    function randIndex(max) {
+      if (window.crypto && window.crypto.getRandomValues) {
+        const arr = new Uint32Array(1);
+        window.crypto.getRandomValues(arr);
+        return arr[0] % max;
+      }
+      return Math.floor(Math.random() * max);
+    }
+
+    document.getElementById('draw').addEventListener('click', function () {
+      const btn = this;
+      const loading = document.getElementById('loading');
+      const r = document.getElementById('result');
+      const tube = document.getElementById('tube');
+      const stick = document.getElementById('stick');
+      const sparkLayer = document.getElementById('sparkLayer');
+      btn.disabled = true;
+      btn.textContent = '摇签中...';
+      loading.textContent = '签筒摇动中，请静心片刻...';
+      r.classList.remove('show', 'reveal', 'rolling');
+      tube.classList.add('shaking');
+      stick.classList.remove('out');
+      sparkLayer.classList.remove('burst');
+      void stick.offsetWidth;
+
+      const i = randIndex(64);
+      const picked = GUAS[i];
+
+      setTimeout(() => {
+        tube.classList.remove('shaking');
+        loading.textContent = '签条抽出中...';
+        sparkLayer.classList.remove('burst');
+        void sparkLayer.offsetWidth;
+        sparkLayer.classList.add('burst');
+        stick.classList.add('out');
+      }, 850);
+
+      setTimeout(() => {
+        show(picked, false);
+        btn.disabled = false;
+        btn.textContent = '再抽一签';
+        loading.textContent = '本签仅供文化体验，请结合现实理性判断。';
+      }, 1650);
+    });
+  </script>
+</body>
+</html>

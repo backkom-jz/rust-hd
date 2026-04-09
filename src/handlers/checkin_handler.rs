@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse, Responder};
 
-use crate::models::{CheckInDateQuery, CheckInRecord, SignInBody, SignInOpenBody};
+use crate::models::{CheckInDateQuery, SignInBody};
 use crate::services::{CheckInService, ERR_CHECKIN_ALREADY_TODAY};
 
 pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder {
@@ -16,16 +16,15 @@ pub async fn fence_config(service: web::Data<CheckInService>) -> impl Responder 
 fn is_bad_request(msg: &str) -> bool {
     matches!(
         msg,
-        "手机号不能为空"
-            | "用户名不能为空"
-            | "无效的日期"
-            | "请提供有效的定位坐标"
-            | "纬度与经度须同时提供或同时省略"
+        "手机号不能为空" | "用户名不能为空" | "无效的日期" | "请提供有效的定位坐标"
     ) || msg.starts_with("签到地点需在")
 }
 
-fn respond_sign_in(result: Result<CheckInRecord, String>) -> HttpResponse {
-    match result {
+pub async fn sign_in(
+    service: web::Data<CheckInService>,
+    body: web::Json<SignInBody>,
+) -> impl Responder {
+    match service.sign_in(body.into_inner()).await {
         Ok(record) => HttpResponse::Created().json(record),
         Err(msg) if msg == ERR_CHECKIN_ALREADY_TODAY => {
             HttpResponse::Conflict().json(serde_json::json!({ "error": msg }))
@@ -35,20 +34,6 @@ fn respond_sign_in(result: Result<CheckInRecord, String>) -> HttpResponse {
         }
         Err(msg) => HttpResponse::InternalServerError().json(serde_json::json!({ "error": msg })),
     }
-}
-
-pub async fn sign_in(
-    service: web::Data<CheckInService>,
-    body: web::Json<SignInBody>,
-) -> impl Responder {
-    respond_sign_in(service.sign_in(body.into_inner()).await)
-}
-
-pub async fn sign_in_open(
-    service: web::Data<CheckInService>,
-    body: web::Json<SignInOpenBody>,
-) -> impl Responder {
-    respond_sign_in(service.sign_in_open(body.into_inner()).await)
 }
 
 pub async fn stats_by_date(

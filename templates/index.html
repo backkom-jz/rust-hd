@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>活动导航</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+      color: #14241f;
+      background: #4a7c6b url("/static/img/jy_0401_02.png") center / cover no-repeat fixed;
+    }
+    .overlay {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: linear-gradient(165deg, rgba(255,255,255,0.1) 0%, rgba(18, 55, 42, 0.42) 100%);
+    }
+    .card {
+      width: 100%;
+      max-width: 560px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.94);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 50px rgba(15, 45, 35, 0.28);
+      padding: 1.6rem 1.35rem 1.35rem;
+    }
+    h1 {
+      margin: 0;
+      color: #0f3d2e;
+      font-size: 1.5rem;
+      letter-spacing: 0.04em;
+    }
+    .sub {
+      margin: 0.45rem 0 1.2rem;
+      color: #46675b;
+      font-size: 0.9rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    .item {
+      display: block;
+      text-decoration: none;
+      border: 1px solid rgba(29, 107, 82, 0.2);
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 0.9rem 0.95rem;
+      transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .item:hover {
+      transform: translateY(-1px);
+      border-color: rgba(29, 107, 82, 0.45);
+      box-shadow: 0 8px 20px rgba(15, 45, 35, 0.12);
+    }
+    .item .title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a4d3a;
+    }
+    .item .desc {
+      margin-top: 0.3rem;
+      font-size: 0.82rem;
+      color: #5b766d;
+      line-height: 1.45;
+    }
+    .foot {
+      margin-top: 1rem;
+      font-size: 0.76rem;
+      color: #7a8f88;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="card">
+      <h1>活动落地导航</h1>
+      <p class="sub">请选择要进入的页面</p>
+      <div class="grid">
+        <a class="item" href="/checkin">
+          <div class="title">围栏签到</div>
+          <div class="desc">需在地理围栏范围内提交，适合现场签到。</div>
+        </a>
+        <a class="item" href="/checkin2">
+          <div class="title">开放签到</div>
+          <div class="desc">不校验距离，可直接提交，同一手机号每日一次。</div>
+        </a>
+        <a class="item" href="/stats">
+          <div class="title">签到统计</div>
+          <div class="desc">按日期查看签到人数、手机号、时间与距离信息。</div>
+        </a>
+        <a class="item" href="/iching">
+          <div class="title">周易六十四卦抽签</div>
+          <div class="desc">随机抽取一卦，展示卦名、卦符与六爻图形。</div>
+        </a>
+      </div>
+      <div class="foot">建议将此页设为站点首页：<code>/</code></div>
+    </div>
+  </div>
+</body>
+</html>
