@@ -29,3 +29,9 @@ pub async fn iching_page() -> impl Responder {
         .content_type("text/html; charset=utf-8")
         .body(include_str!("../../templates/iching.html"))
 }
+
+pub async fn lottery_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/lottery.html"))
+}

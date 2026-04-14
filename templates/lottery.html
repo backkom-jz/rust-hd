@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>抽奖轮盘</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+      color: #132018;
+      background: #1f3a2f radial-gradient(120% 90% at 50% -10%, #34644f 0%, #1f3a2f 55%, #14251e 100%) fixed;
+    }
+    .overlay {
+      min-height: 100vh;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      width: 100%;
+      max-width: 1080px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
+      padding: 1.1rem 1rem 1rem;
+    }
+    nav { font-size: 0.86rem; margin-bottom: 0.7rem; }
+    nav a { color: #2b5a49; text-decoration: none; font-weight: 600; }
+    nav a:hover { text-decoration: underline; }
+    h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      color: #133a2c;
+      letter-spacing: 0.04em;
+    }
+    .sub {
+      margin: 0.35rem 0 0.9rem;
+      color: #4f675d;
+      font-size: 0.85rem;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 0.9rem;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      border: 1px solid rgba(30, 92, 70, 0.17);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(249, 252, 250, 0.98));
+      padding: 0.8rem;
+    }
+    .panel h2 {
+      margin: 0 0 0.55rem;
+      font-size: 1rem;
+      color: #174634;
+    }
+    .pool-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.7rem;
+    }
+    .pool-box {
+      border: 1px dashed rgba(31, 89, 68, 0.25);
+      border-radius: 12px;
+      padding: 0.6rem;
+      background: rgba(247, 252, 249, 0.92);
+    }
+    .pool-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      font-size: 0.84rem;
+      color: #275848;
+      font-weight: 700;
+    }
+    .count {
+      font-size: 0.76rem;
+      color: #4f7567;
+      font-weight: 600;
+    }
+    .row {
+      display: flex;
+      gap: 0.45rem;
+      margin-bottom: 0.35rem;
+    }
+    input, textarea, button {
+      font: inherit;
+    }
+    input, textarea {
+      width: 100%;
+      border: 1px solid rgba(29, 90, 68, 0.24);
+      border-radius: 10px;
+      padding: 0.52rem 0.62rem;
+      background: #fff;
+    }
+    textarea {
+      min-height: 88px;
+      resize: vertical;
+      font-size: 0.82rem;
+      line-height: 1.42;
+    }
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 0.56rem 0.72rem;
+      background: linear-gradient(135deg, #1b6a50 0%, #12523e 100%);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn.alt {
+      background: linear-gradient(135deg, #5b7281 0%, #405563 100%);
+    }
+    .btn.warn {
+      background: linear-gradient(135deg, #c65540 0%, #a2412e 100%);
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      min-height: 1.5rem;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 0.25rem 0.58rem;
+      font-size: 0.76rem;
+      background: rgba(24, 99, 73, 0.1);
+      color: #1e5a45;
+      border: 1px solid rgba(24, 99, 73, 0.17);
+    }
+    .wheel-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.8rem;
+    }
+    .pointer {
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 22px solid #cf3f33;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+    }
+    .wheel-shell {
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      position: relative;
+      border: 10px solid #f4f0de;
+      box-shadow:
+        inset 0 0 0 2px rgba(18, 64, 48, 0.16),
+        0 14px 28px rgba(14, 45, 34, 0.3);
+      background: #f8fbf9;
+    }
+    .wheel {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      transform: rotate(0deg);
+    }
+    .labels {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      font-size: 0.78rem;
+      color: #10271d;
+      font-weight: 700;
+    }
+    .label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: 0 0;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .hub {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 52px;
+      height: 52px;
+      margin-left: -26px;
+      margin-top: -26px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #f9f7ef 0%, #e8e1c8 100%);
+      border: 2px solid rgba(49, 70, 55, 0.35);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .status {
+      min-height: 1.2rem;
+      color: #305447;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .result {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(28, 99, 74, 0.2);
+      background: rgba(240, 251, 245, 0.92);
+      padding: 0.7rem;
+      text-align: center;
+      color: #174736;
+      font-weight: 700;
+      font-size: 0.95rem;
+      min-height: 2.6rem;
+    }
+    .history {
+      margin-top: 0.55rem;
+      max-height: 210px;
+      overflow: auto;
+      border: 1px solid rgba(31, 84, 65, 0.17);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .history table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.79rem;
+    }
+    .history th, .history td {
+      border-bottom: 1px solid rgba(28, 81, 62, 0.12);
+      padding: 0.42rem 0.45rem;
+      text-align: left;
+    }
+    .history th {
+      position: sticky;
+      top: 0;
+      background: #f3f8f5;
+      color: #1f5a45;
+    }
+    .history tr:last-child td { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="overlay">
+    <div class="card">
+      <nav><a href="/">首页</a> · <a href="/checkin">围栏签到</a> · <a href="/checkin2">开放签到</a> · <a href="/stats">统计</a> · <a href="/iching">周易抽签</a></nav>
+      <h1>抽奖轮盘</h1>
+      <p class="sub">可编辑奖品池和候选人池，点击开始抽奖后轮盘旋转并自动出结果。</p>
+
+      <div class="layout">
+        <section class="panel">
+          <h2>抽奖池配置</h2>
+          <div class="pool-grid">
+            <div class="pool-box">
+              <div class="pool-head"><span>候选人池</span><span class="count" id="candidateCount">0 人</span></div>
+              <div class="row">
+                <input id="candidateInput" type="text" placeholder="输入候选人，如：张三" />
+                <button class="btn" id="addCandidateBtn" type="button">添加</button>
+              </div>
+              <textarea id="candidateBulk" placeholder="批量输入候选人（每行一个）"></textarea>
+              <div class="row" style="margin-top:0.35rem;">
+                <button class="btn alt" id="importCandidatesBtn" type="button">覆盖导入</button>
+                <button class="btn warn" id="clearCandidatesBtn" type="button">清空候选人</button>
+              </div>
+              <div class="chips" id="candidateChips"></div>
+            </div>
+
+            <div class="pool-box">
+              <div class="pool-head"><span>奖品池</span><span class="count" id="prizeCount">0 项</span></div>
+              <div class="row">
+                <input id="prizeInput" type="text" placeholder="输入奖品，如：蓝牙耳机" />
+                <button class="btn" id="addPrizeBtn" type="button">添加</button>
+              </div>
+              <textarea id="prizeBulk" placeholder="批量输入奖品（每行一个）"></textarea>
+              <div class="row" style="margin-top:0.35rem;">
+                <button class="btn alt" id="importPrizesBtn" type="button">覆盖导入</button>
+                <button class="btn warn" id="clearPrizesBtn" type="button">清空奖品</button>
+              </div>
+              <div class="chips" id="prizeChips"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>轮盘抽奖</h2>
+          <div class="wheel-wrap">
+            <div class="pointer" aria-hidden="true"></div>
+            <div class="wheel-shell">
+              <div class="wheel" id="wheel"></div>
+              <div class="labels" id="wheelLabels"></div>
+              <div class="hub" aria-hidden="true"></div>
+            </div>
+            <div class="actions">
+              <button class="btn" id="spinBtn" type="button">开始抽奖</button>
+              <button class="btn alt" id="resetDefaultBtn" type="button">恢复默认池</button>
+            </div>
+            <div class="status" id="status">等待抽奖</div>
+            <div class="result" id="result">请先确认候选人与奖品池</div>
+          </div>
+          <div class="history">
+            <table>
+              <thead>
+                <tr><th style="width:30%;">时间</th><th style="width:30%;">中奖人</th><th>奖品</th></tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const DEFAULT_CANDIDATES = [
+        "张三", "李四", "王五", "赵六", "钱七", "孙八", "周九", "吴十"
+      ];
+      const DEFAULT_PRIZES = [
+        "蓝牙耳机", "保温杯", "电影票", "键盘", "鼠标", "充电宝"
+      ];
+
+      let candidates = DEFAULT_CANDIDATES.slice();
+      let prizes = DEFAULT_PRIZES.slice();
+      let history = [];
+      let spinning = false;
+      let currentRotation = 0;
+
+      const wheel = document.getElementById("wheel");
+      const wheelLabels = document.getElementById("wheelLabels");
+      const statusEl = document.getElementById("status");
+      const resultEl = document.getElementById("result");
+      const spinBtn = document.getElementById("spinBtn");
+
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function randomInt(max) {
+        if (window.crypto && window.crypto.getRandomValues) {
+          const arr = new Uint32Array(1);
+          window.crypto.getRandomValues(arr);
+          return arr[0] % max;
+        }
+        return Math.floor(Math.random() * max);
+      }
+
+      function parseLines(raw) {
+        return raw
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+      }
+
+      function updatePoolCounters() {
+        document.getElementById("candidateCount").textContent = `${candidates.length} 人`;
+        document.getElementById("prizeCount").textContent = `${prizes.length} 项`;
+      }
+
+      function renderChips() {
+        document.getElementById("candidateChips").innerHTML = candidates
+          .map((name) => `<span class="chip">${escapeHtml(name)}</span>`)
+          .join("");
+        document.getElementById("prizeChips").innerHTML = prizes
+          .map((name) => `<span class="chip">${escapeHtml(name)}</span>`)
+          .join("");
+      }
+
+      function palette(i) {
+        const colors = [
+          ["#e8f6ef", "#d8efdf"],
+          ["#fdf0d8", "#fbe5c3"],
+          ["#dff2fb", "#cfe8f7"],
+          ["#f7e4f1", "#f2d8e9"],
+          ["#ece8fb", "#ddd5f7"],
+          ["#fbe7dd", "#f8d8c8"]
+        ];
+        return colors[i % colors.length];
+      }
+
+      function renderWheel() {
+        const n = candidates.length;
+        wheelLabels.innerHTML = "";
+
+        if (n === 0) {
+          wheel.style.background = "#eef4f1";
+          wheel.style.transform = "rotate(0deg)";
+          currentRotation = 0;
+          return;
+        }
+
+        const seg = 360 / n;
+        let start = 0;
+        const stops = [];
+        for (let i = 0; i < n; i++) {
+          const p = palette(i);
+          const end = start + seg;
+          stops.push(`${p[0]} ${start.toFixed(3)}deg ${end.toFixed(3)}deg`);
+          stops.push(`${p[1]} ${start.toFixed(3)}deg ${end.toFixed(3)}deg`);
+          start = end;
+        }
+        wheel.style.background = `conic-gradient(${stops.join(",")})`;
+
+        for (let i = 0; i < n; i++) {
+          const angle = i * seg + seg / 2;
+          const label = document.createElement("div");
+          label.className = "label";
+          const text = candidates[i].length > 6 ? `${candidates[i].slice(0, 6)}…` : candidates[i];
+          label.innerHTML = escapeHtml(text);
+          label.style.transform = `rotate(${angle}deg) translate(0,-130px) rotate(90deg)`;
+          wheelLabels.appendChild(label);
+        }
+      }
+
+      function renderHistory() {
+        const body = document.getElementById("historyBody");
+        body.innerHTML = history.map((h) =>
+          `<tr><td>${escapeHtml(h.time)}</td><td>${escapeHtml(h.winner)}</td><td>${escapeHtml(h.prize)}</td></tr>`
+        ).join("");
+      }
+
+      function refreshAll() {
+        updatePoolCounters();
+        renderChips();
+        renderWheel();
+        spinBtn.disabled = spinning || candidates.length === 0 || prizes.length === 0;
+      }
+
+      function nowTime() {
+        const d = new Date();
+        const pad = (x) => String(x).padStart(2, "0");
+        return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+
+      function spin() {
+        if (spinning) return;
+        if (candidates.length === 0) {
+          statusEl.textContent = "候选人池为空，无法抽奖";
+          return;
+        }
+        if (prizes.length === 0) {
+          statusEl.textContent = "奖品池为空，无法抽奖";
+          return;
+        }
+
+        spinning = true;
+        spinBtn.disabled = true;
+        statusEl.textContent = "轮盘旋转中...";
+        resultEl.textContent = "正在抽取，请稍候...";
+
+        const candidateIndex = randomInt(candidates.length);
+        const prizeIndex = randomInt(prizes.length);
+        const winner = candidates[candidateIndex];
+        const prize = prizes[prizeIndex];
+
+        const n = candidates.length;
+        const seg = 360 / n;
+        const center = candidateIndex * seg + seg / 2;
+        const extraTurns = 7 + randomInt(3);
+        const target = extraTurns * 360 + (360 - center);
+        currentRotation += target;
+
+        wheel.style.transition = "transform 4.6s cubic-bezier(0.16, 0.86, 0.2, 1)";
+        wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+        const onDone = function (evt) {
+          if (evt.target !== wheel) return;
+          wheel.removeEventListener("transitionend", onDone);
+          wheel.style.transition = "none";
+          currentRotation = currentRotation % 360;
+          wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+          candidates.splice(candidateIndex, 1);
+          prizes.splice(prizeIndex, 1);
+          history.unshift({ time: nowTime(), winner, prize });
+          if (history.length > 80) history = history.slice(0, 80);
+
+          statusEl.textContent = "抽奖完成";
+          resultEl.textContent = `恭喜 ${winner} 获得：${prize}`;
+          spinning = false;
+
+          renderHistory();
+          refreshAll();
+
+          if (candidates.length === 0) {
+            statusEl.textContent = "候选人已抽完，可重置候选人池";
+          } else if (prizes.length === 0) {
+            statusEl.textContent = "奖品已抽完，可重置奖品池";
+          }
+        };
+
+        wheel.addEventListener("transitionend", onDone);
+      }
+
+      document.getElementById("addCandidateBtn").addEventListener("click", function () {
+        const input = document.getElementById("candidateInput");
+        const name = input.value.trim();
+        if (!name) return;
+        candidates.push(name);
+        input.value = "";
+        refreshAll();
+      });
+
+      document.getElementById("addPrizeBtn").addEventListener("click", function () {
+        const input = document.getElementById("prizeInput");
+        const prize = input.value.trim();
+        if (!prize) return;
+        prizes.push(prize);
+        input.value = "";
+        refreshAll();
+      });
+
+      document.getElementById("importCandidatesBtn").addEventListener("click", function () {
+        const list = parseLines(document.getElementById("candidateBulk").value);
+        candidates = list;
+        refreshAll();
+      });
+
+      document.getElementById("importPrizesBtn").addEventListener("click", function () {
+        const list = parseLines(document.getElementById("prizeBulk").value);
+        prizes = list;
+        refreshAll();
+      });
+
+      document.getElementById("clearCandidatesBtn").addEventListener("click", function () {
+        candidates = [];
+        refreshAll();
+      });
+
+      document.getElementById("clearPrizesBtn").addEventListener("click", function () {
+        prizes = [];
+        refreshAll();
+      });
+
+      document.getElementById("resetDefaultBtn").addEventListener("click", function () {
+        if (spinning) return;
+        candidates = DEFAULT_CANDIDATES.slice();
+        prizes = DEFAULT_PRIZES.slice();
+        statusEl.textContent = "已恢复默认奖池";
+        resultEl.textContent = "请点击开始抽奖";
+        refreshAll();
+      });
+
+      spinBtn.addEventListener("click", spin);
+
+      refreshAll();
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>
