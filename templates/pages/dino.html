@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>恐龙跳跃</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        恐龙跳跃
+        <span>现代感轻量小游戏，支持前 10 名积分榜</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <div class="game-shell">
+        <section class="game-panel">
+          <div class="game-head">
+            <strong>Dino Jump</strong>
+            <div class="score-badge">当前得分：<span id="current-score">0</span></div>
+          </div>
+          <canvas id="dino-canvas" class="game-canvas" width="900" height="280"></canvas>
+          <p class="game-help">按空格键或点击画布起跳，撞到障碍物则游戏结束，得分将尝试进入排行榜。</p>
+        </section>
+
+        <aside class="rank-panel">
+          <h2>Top 10 积分榜</h2>
+          <div class="name-row">
+            <input id="player-name" type="text" maxlength="16" placeholder="输入昵称（默认：游客）" />
+            <button id="restart-btn" class="primary" type="button">重新开始</button>
+          </div>
+          <div class="skin-row">
+            <select id="dino-style" aria-label="恐龙风格">
+              <option value="classic">经典卡通</option>
+              <option value="tech">科技装甲</option>
+              <option value="neon">霓虹赛博</option>
+            </select>
+            <select id="dino-outfit" aria-label="换装配件">
+              <option value="none">无配件</option>
+              <option value="visor">未来护目镜</option>
+              <option value="cape">动能披风</option>
+              <option value="jet">喷射背包</option>
+            </select>
+          </div>
+          <p class="game-help">风格和配件可随时切换，下一帧立即生效。</p>
+          <table class="rank-table">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>玩家</th>
+                <th>分数</th>
+              </tr>
+            </thead>
+            <tbody id="rank-body"></tbody>
+          </table>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="/static/js/dino.js"></script>
+</body>
+</html>

@@ -18,6 +18,21 @@ pub async fn init_schema(pool: &MySqlPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS dino_scores (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            nickname VARCHAR(64) NOT NULL,
+            score BIGINT NOT NULL,
+            created_at DATETIME NOT NULL,
+            KEY idx_dino_scores_score (score),
+            KEY idx_dino_scores_created_at (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     migrate_legacy_check_ins_geo(pool).await?;
     init_geo_fence_config(pool).await?;
     Ok(())

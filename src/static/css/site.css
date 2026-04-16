@@ -1,0 +1,456 @@
+/* Shared layout — modern, minimal */
+:root {
+  --bg0: #f4f6f8;
+  --bg1: #e8ecf1;
+  --ink: #0d1117;
+  --muted: #5c6570;
+  --line: rgba(13, 17, 23, 0.08);
+  --accent: #1a56c4;
+  --accent-soft: rgba(26, 86, 196, 0.1);
+  --card: #ffffff;
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --shadow: 0 24px 48px rgba(13, 17, 23, 0.06);
+  --shadow-hover: 0 32px 64px rgba(13, 17, 23, 0.1);
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--bg0);
+  line-height: 1.5;
+}
+
+/* Optional hero background image (部署时放入 static/img） */
+body.has-hero-bg {
+  background-color: var(--bg0);
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgba(26, 86, 196, 0.09), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(13, 110, 90, 0.07), transparent 50%),
+    linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 100%);
+}
+
+.site-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: clamp(1.25rem, 4vw, 2.5rem) 1.25rem 2rem;
+}
+
+.site-header {
+  width: 100%;
+  max-width: 1080px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.site-brand {
+  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.site-brand span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+.back-link {
+  font-size: 0.875rem;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  transition: background 0.15s, transform 0.12s;
+}
+
+.back-link:hover {
+  background: rgba(26, 86, 196, 0.16);
+  transform: translateY(-1px);
+}
+
+.site-main {
+  width: 100%;
+  max-width: 1080px;
+}
+
+.hero-card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: clamp(1.35rem, 3vw, 2rem);
+  margin-bottom: 1.75rem;
+}
+
+.hero-card h1 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.5rem, 3vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.hero-card .lead {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  max-width: 42rem;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  margin: 0 0 0.65rem;
+  font-weight: 600;
+}
+
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+
+.nav-tile {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.1rem;
+  transition: border-color 0.15s, box-shadow 0.2s, transform 0.12s;
+}
+
+.nav-tile:hover {
+  border-color: rgba(26, 86, 196, 0.25);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.nav-tile .t {
+  font-weight: 650;
+  font-size: 0.98rem;
+  color: var(--ink);
+}
+
+.nav-tile .d {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.site-foot {
+  margin-top: 2rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.site-foot code {
+  font-size: 0.85em;
+  background: rgba(13, 17, 23, 0.06);
+  padding: 0.12rem 0.35rem;
+  border-radius: 6px;
+}
+
+/* Tool pages */
+.tool-panel {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.tool-panel h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.tool-panel .hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field-row {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.field-row label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.field-row input,
+.field-row select {
+  width: 100%;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.field-row input:focus,
+.field-row select:focus {
+  outline: 2px solid rgba(26, 86, 196, 0.35);
+  outline-offset: 0;
+  border-color: var(--accent);
+  background: #fff;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+button.primary {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 1.1rem;
+  background: var(--accent);
+  color: #fff;
+}
+
+button.primary:hover {
+  filter: brightness(1.05);
+}
+
+.result-box {
+  margin-top: 1.1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  border: 1px solid rgba(26, 86, 196, 0.15);
+  font-size: 0.9rem;
+}
+
+.result-box strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+
+/* Calculator keypad */
+.calc-display {
+  width: 100%;
+  font: inherit;
+  font-size: 1.75rem;
+  font-weight: 600;
+  text-align: right;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #0d1117;
+  color: #f0f3f6;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.calc-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
+}
+
+.calc-keys button {
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 500;
+  padding: 0.65rem 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.calc-keys button:hover {
+  background: #f0f2f5;
+}
+
+.calc-keys button.op {
+  background: #eef2f8;
+  font-weight: 600;
+}
+
+.calc-keys button.wide {
+  grid-column: span 2;
+}
+
+.mortgage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  margin-top: 0.75rem;
+}
+
+.mortgage-table th,
+.mortgage-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.35rem 0.4rem;
+  text-align: right;
+}
+
+.mortgage-table th:first-child,
+.mortgage-table td:first-child {
+  text-align: left;
+}
+
+.mortgage-scroll {
+  max-height: 220px;
+  overflow: auto;
+  margin-top: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+/* Dino jump game */
+.game-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.game-panel,
+.rank-panel {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  padding: 1rem;
+}
+
+.game-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.score-badge {
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: #f3f6fb;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+}
+
+.game-canvas {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ecf3ff 100%);
+}
+
+.game-help {
+  margin: 0.65rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rank-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.name-row input {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.skin-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+}
+
+.skin-row select {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.rank-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.rank-table th,
+.rank-table td {
+  padding: 0.38rem 0.2rem;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+
+.rank-table th:first-child,
+.rank-table td:first-child,
+.rank-table th:nth-child(2),
+.rank-table td:nth-child(2) {
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .game-shell {
+    grid-template-columns: 1fr;
+  }
+}

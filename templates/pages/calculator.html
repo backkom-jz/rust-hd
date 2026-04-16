@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>简易计算器</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        简易计算器
+        <span>支持基础加减乘除与小数运算</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <section class="tool-panel">
+        <h1>计算器</h1>
+        <p class="hint">点击按钮进行输入，按 “=” 查看结果。</p>
+
+        <div id="calc-display" class="calc-display">0</div>
+        <div id="calc-keys" class="calc-keys">
+          <button data-act="clear" class="op">AC</button>
+          <button data-act="del" class="op">DEL</button>
+          <button data-act="op" data-val="÷" class="op">÷</button>
+          <button data-act="op" data-val="×" class="op">×</button>
+
+          <button data-act="digit" data-val="7">7</button>
+          <button data-act="digit" data-val="8">8</button>
+          <button data-act="digit" data-val="9">9</button>
+          <button data-act="op" data-val="-" class="op">-</button>
+
+          <button data-act="digit" data-val="4">4</button>
+          <button data-act="digit" data-val="5">5</button>
+          <button data-act="digit" data-val="6">6</button>
+          <button data-act="op" data-val="+" class="op">+</button>
+
+          <button data-act="digit" data-val="1">1</button>
+          <button data-act="digit" data-val="2">2</button>
+          <button data-act="digit" data-val="3">3</button>
+          <button data-act="eq" class="op">=</button>
+
+          <button data-act="digit" data-val="0" class="wide">0</button>
+          <button data-act="digit" data-val=".">.</button>
+          <button data-act="clear" class="op">C</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/js/calculator.js"></script>
+</body>
+</html>

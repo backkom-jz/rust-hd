@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>房贷计算器</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        房贷计算器
+        <span>实时估算月供、总利息与总还款</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <section class="tool-panel">
+        <h1>贷款参数</h1>
+        <p class="hint">输入贷款金额、利率、年限，支持等额本息与等额本金。</p>
+
+        <form id="mortgage-form" novalidate>
+          <div class="field-row">
+            <label for="principal">贷款金额（元）</label>
+            <input id="principal" name="principal" type="number" min="0" step="1000" value="1000000" />
+          </div>
+          <div class="field-row">
+            <label for="rate">年利率（%）</label>
+            <input id="rate" name="rate" type="number" min="0" step="0.01" value="3.85" />
+          </div>
+          <div class="field-row">
+            <label for="years">贷款年限（年）</label>
+            <input id="years" name="years" type="number" min="1" max="40" step="1" value="30" />
+          </div>
+          <div class="field-row">
+            <label for="mode">还款方式</label>
+            <select id="mode" name="mode">
+              <option value="equal_principal_interest">等额本息</option>
+              <option value="equal_principal">等额本金</option>
+            </select>
+          </div>
+        </form>
+
+        <div class="result-box">
+          <strong>结果</strong>
+          <div>首月月供：<span id="out-monthly">—</span></div>
+          <div>总利息：<span id="out-interest">—</span></div>
+          <div>总还款：<span id="out-total">—</span></div>
+        </div>
+
+        <div class="mortgage-scroll">
+          <table id="mortgage-table" class="mortgage-table">
+            <thead>
+              <tr>
+                <th>期数</th>
+                <th>当期还款</th>
+                <th>利息</th>
+                <th>剩余本金</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="/static/js/mortgage.js"></script>
+</body>
+</html>
