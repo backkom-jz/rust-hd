@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="抽奖轮盘 — 配置奖池与候选人池，滚动抽取中奖结果" />
   <title>抽奖轮盘</title>
   <style>
     * { box-sizing: border-box; }
@@ -31,6 +32,7 @@
     nav { font-size: 0.86rem; margin-bottom: 0.7rem; }
     nav a { color: #2b5a49; text-decoration: none; font-weight: 600; }
     nav a:hover { text-decoration: underline; }
+    nav .home-link { color: #174634; }
     h1 {
       margin: 0;
       font-size: 1.35rem;
@@ -254,7 +256,7 @@
 <body>
   <div class="overlay">
     <div class="card">
-      <nav><a href="/">首页</a> · <a href="/checkin">围栏签到</a> · <a href="/checkin2">开放签到</a> · <a href="/stats">统计</a> · <a href="/iching">周易抽签</a></nav>
+      <nav><a href="/" class="home-link">← 返回首页</a> · <a href="/checkin">围栏签到</a> · <a href="/checkin2">开放签到</a> · <a href="/stats">统计</a> · <a href="/iching">周易抽签</a></nav>
       <h1>抽奖轮盘</h1>
       <p class="sub">可编辑奖品池和候选人池，点击开始抽奖后轮盘旋转并自动出结果。</p>
 
