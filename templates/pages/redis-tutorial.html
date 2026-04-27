@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redis 数据结构 · 卡通图解</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+  <link rel="stylesheet" href="/static/css/redis-cartoon.css" />
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        Redis 小方带你学
+        <span>用卡通动画理解常见数据类型与命令</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <section class="hero-card redis-tutorial">
+        <h1>Redis 数据结构图解</h1>
+        <p class="page-lead">
+          吉祥物「小方」会在每种类型旁陪你观看演示。点击下方标签切换类型，可随时点「再播一遍」重看动画。
+          内容为入门向示意，与真实内存布局无关。
+        </p>
+
+        <div class="redis-topics" role="tablist" aria-label="数据类型">
+          <button type="button" class="redis-topic" role="tab" data-topic="string" aria-selected="true">String 字符串</button>
+          <button type="button" class="redis-topic" role="tab" data-topic="list">List 列表</button>
+          <button type="button" class="redis-topic" role="tab" data-topic="hash">Hash 哈希</button>
+          <button type="button" class="redis-topic" role="tab" data-topic="set">Set 集合</button>
+          <button type="button" class="redis-topic" role="tab" data-topic="zset">Sorted Set 有序集</button>
+          <button type="button" class="redis-topic" role="tab" data-topic="stream">Stream 流</button>
+        </div>
+
+        <section class="redis-panel is-active" data-type="string" role="tabpanel">
+          <h2>String — 键值一体</h2>
+          <p class="cmd-hint">SET greeting &quot;你好 Redis&quot; · GET greeting · INCR page_view</p>
+          <div class="redis-stage-wrap string-stage">
+            <div class="kv-row">
+              <span class="key-pill">greeting</span>
+              <span class="val-chip">你好 Redis</span>
+            </div>
+            <div class="incr-dial">
+              <span>INCR →</span>
+              <span class="num">1</span>
+            </div>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+
+        <section class="redis-panel" data-type="list" role="tabpanel">
+          <h2>List — 双向队列</h2>
+          <p class="cmd-hint">LPUSH jobs A → LPUSH jobs B → LPUSH jobs C · RPOP jobs 从右侧弹出</p>
+          <div class="redis-stage-wrap list-stage">
+            <div class="list-track">
+              <div class="list-cell">C</div>
+              <div class="list-cell">B</div>
+              <div class="list-cell">A</div>
+            </div>
+            <p class="arrow-hint">左侧不断 LPUSH「插队」，右侧 RPOP「领任务」。</p>
+            <div class="pop-right" aria-hidden="true">RPOP!</div>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+
+        <section class="redis-panel" data-type="hash" role="tabpanel">
+          <h2>Hash — 一行对象多字段</h2>
+          <p class="cmd-hint">HSET user:1 name 小方 · HSET user:1 level 3 · HGETALL user:1</p>
+          <div class="redis-stage-wrap hash-stage">
+            <table>
+              <thead>
+                <tr><th>字段</th><th>值</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>name</td>
+                  <td class="h-flash-1">小方</td>
+                </tr>
+                <tr>
+                  <td>level</td>
+                  <td class="h-flash-2">3</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+
+        <section class="redis-panel" data-type="set" role="tabpanel">
+          <h2>Set — 不重复成员</h2>
+          <p class="cmd-hint">SADD tags rust · SADD tags web · 再次 SADD tags rust → 返回 0，集合不变</p>
+          <div class="redis-stage-wrap set-stage">
+            <div class="bubble-wrap">
+              <div class="bubble a">rust</div>
+              <div class="bubble b">web</div>
+            </div>
+            <p class="dup-try">再次 SADD rust：<span class="shake-x">已是成员，拒绝重复～</span></p>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+
+        <section class="redis-panel" data-type="zset" role="tabpanel">
+          <h2>Sorted Set — 带分数的排行榜</h2>
+          <p class="cmd-hint">ZADD leaderboard 100 alice · ZADD leaderboard 250 bob · ZADD leaderboard 180 carol · ZRANGE 按分数排序</p>
+          <div class="redis-stage-wrap zset-stage">
+            <div class="z-bars">
+              <div class="z-item" data-score="1">
+                <div class="z-bar"></div>
+                <span class="z-label">alice</span>
+                <span class="z-score">100</span>
+              </div>
+              <div class="z-item" data-score="2">
+                <div class="z-bar"></div>
+                <span class="z-label">carol</span>
+                <span class="z-score">180</span>
+              </div>
+              <div class="z-item" data-score="3">
+                <div class="z-bar"></div>
+                <span class="z-label">bob</span>
+                <span class="z-score">250</span>
+              </div>
+            </div>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+
+        <section class="redis-panel" data-type="stream" role="tabpanel">
+          <h2>Stream — 追加型日志</h2>
+          <p class="cmd-hint">XADD events * action login · XADD events * action click · XREAD 消费新消息</p>
+          <div class="redis-stage-wrap stream-stage">
+            <div class="stream-river">
+              <span class="msg">login</span>
+              <span class="msg">click</span>
+            </div>
+            <p class="caption">消息像小船顺流而下，消费者按偏移读取。</p>
+            <div class="redis-mascot" aria-hidden="true"><span class="mouth"></span></div>
+          </div>
+          <button type="button" class="redis-replay">再播一遍</button>
+        </section>
+      </section>
+    </main>
+    <footer class="site-foot">页面路径：<code>/redis-tutorial</code></footer>
+  </div>
+  <script src="/static/js/redis-cartoon.js"></script>
+</body>
+</html>

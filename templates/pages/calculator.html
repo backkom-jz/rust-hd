@@ -3,49 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="在线简易计算器 — 支持加减乘除、百分比、取反、键盘输入与连等运算" />
   <title>简易计算器</title>
   <link rel="stylesheet" href="/static/css/site.css" />
 </head>
 <body class="has-hero-bg">
   <div class="site-shell">
     <header class="site-header">
-      <div class="site-brand">
+      <div class="site-brand" role="heading" aria-level="1">
         简易计算器
-        <span>支持基础加减乘除与小数运算</span>
+        <span>支持基础加减乘除、百分比与键盘操作</span>
       </div>
-      <a class="back-link" href="/">返回首页</a>
+      <a class="back-link" href="/" aria-label="返回首页">← 返回首页</a>
     </header>
 
     <main class="site-main">
-      <section class="tool-panel">
-        <h1>计算器</h1>
-        <p class="hint">点击按钮进行输入，按 “=” 查看结果。</p>
+      <section class="tool-panel" aria-label="计算器">
+        <h1 class="visually-hidden">计算器</h1>
+        <p class="hint" id="calc-hint">点击按钮或使用键盘进行操作，按 <kbd>Enter</kbd> 查看结果</p>
 
-        <div id="calc-display" class="calc-display">0</div>
-        <div id="calc-keys" class="calc-keys">
-          <button data-act="clear" class="op">AC</button>
-          <button data-act="del" class="op">DEL</button>
-          <button data-act="op" data-val="÷" class="op">÷</button>
-          <button data-act="op" data-val="×" class="op">×</button>
+        <div id="calc-display" class="calc-display" role="status" aria-live="polite" aria-atomic="true">0</div>
 
-          <button data-act="digit" data-val="7">7</button>
-          <button data-act="digit" data-val="8">8</button>
-          <button data-act="digit" data-val="9">9</button>
-          <button data-act="op" data-val="-" class="op">-</button>
+        <div id="calc-keys" class="calc-keys" role="group" aria-label="计算器按键" aria-describedby="calc-hint">
+          <!-- Row 1: 清除 & 功能 -->
+          <button data-act="clear" class="op-fn" aria-label="全部清除 (AC)">AC</button>
+          <button data-act="ce" class="op-fn" aria-label="清除当前输入 (C)">C</button>
+          <button data-act="del" class="op-fn" aria-label="退格删除">DEL</button>
+          <button data-act="op" data-val="÷" class="op" aria-label="除号">÷</button>
 
-          <button data-act="digit" data-val="4">4</button>
-          <button data-act="digit" data-val="5">5</button>
-          <button data-act="digit" data-val="6">6</button>
-          <button data-act="op" data-val="+" class="op">+</button>
+          <!-- Row 2 -->
+          <button data-act="digit" data-val="7" aria-label="7">7</button>
+          <button data-act="digit" data-val="8" aria-label="8">8</button>
+          <button data-act="digit" data-val="9" aria-label="9">9</button>
+          <button data-act="op" data-val="×" class="op" aria-label="乘号">×</button>
 
-          <button data-act="digit" data-val="1">1</button>
-          <button data-act="digit" data-val="2">2</button>
-          <button data-act="digit" data-val="3">3</button>
-          <button data-act="eq" class="op">=</button>
+          <!-- Row 3 -->
+          <button data-act="digit" data-val="4" aria-label="4">4</button>
+          <button data-act="digit" data-val="5" aria-label="5">5</button>
+          <button data-act="digit" data-val="6" aria-label="6">6</button>
+          <button data-act="op" data-val="-" class="op" aria-label="减号">−</button>
 
-          <button data-act="digit" data-val="0" class="wide">0</button>
-          <button data-act="digit" data-val=".">.</button>
-          <button data-act="clear" class="op">C</button>
+          <!-- Row 4 -->
+          <button data-act="digit" data-val="1" aria-label="1">1</button>
+          <button data-act="digit" data-val="2" aria-label="2">2</button>
+          <button data-act="digit" data-val="3" aria-label="3">3</button>
+          <button data-act="op" data-val="+" class="op" aria-label="加号">+</button>
+
+          <!-- Row 5 -->
+          <button data-act="neg" class="op-fn" aria-label="取反 (正负号切换)">±</button>
+          <button data-act="digit" data-val="0" aria-label="0">0</button>
+          <button data-act="pct" class="op-fn" aria-label="百分比">%</button>
+          <button data-act="eq" class="op-eq" aria-label="等于">=</button>
         </div>
       </section>
     </main>

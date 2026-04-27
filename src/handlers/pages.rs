@@ -53,3 +53,15 @@ pub async fn dino_page() -> impl Responder {
         .content_type("text/html; charset=utf-8")
         .body(include_str!("../../templates/pages/dino.html"))
 }
+
+pub async fn convert_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/pages/convert.html"))
+}
+
+pub async fn redis_tutorial_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/pages/redis-tutorial.html"))
+}

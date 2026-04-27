@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>图片格式转换</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        图片格式转换
+        <span>上传图片并选择目标格式，单文件不超过 20MB</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <section class="tool-panel">
+        <h1>上传与转换</h1>
+        <p class="hint">支持常见位图格式互转：PNG、JPEG、GIF、BMP。动画 GIF 将按首帧导出为静态图（部分目标格式）。</p>
+
+        <form id="convert-form">
+          <div class="field-row">
+            <label for="file-input">选择文件</label>
+            <input id="file-input" name="file" type="file" accept="image/*,.bmp" required />
+          </div>
+          <div class="field-row">
+            <label for="format-select">目标格式</label>
+            <select id="format-select" name="format" required>
+              <option value="" disabled selected>请选择</option>
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="gif">GIF</option>
+              <option value="bmp">BMP</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="primary" id="submit-btn">开始转换并下载</button>
+          </div>
+        </form>
+
+        <p id="convert-status" class="hint" style="margin-top:1rem;min-height:1.25rem" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <footer class="site-foot">接口路径：<code>POST /api/convert</code>（multipart，字段 <code>file</code>、<code>format</code>）</footer>
+  </div>
+  <script>
+    (function () {
+      const MAX = 20 * 1024 * 1024;
+      const form = document.getElementById("convert-form");
+      const fileInput = document.getElementById("file-input");
+      const formatSelect = document.getElementById("format-select");
+      const statusEl = document.getElementById("convert-status");
+      const submitBtn = document.getElementById("submit-btn");
+
+      function setStatus(msg, isError) {
+        statusEl.textContent = msg || "";
+        statusEl.style.color = isError ? "#b42318" : "var(--muted)";
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          setStatus("请先选择文件。", true);
+          return;
+        }
+        if (file.size > MAX) {
+          setStatus("文件超过 20MB，请压缩或更换文件。", true);
+          return;
+        }
+        const fmt = formatSelect.value;
+        if (!fmt) {
+          setStatus("请选择目标格式。", true);
+          return;
+        }
+
+        const fd = new FormData();
+        fd.append("file", file, file.name);
+        fd.append("format", fmt);
+
+        submitBtn.disabled = true;
+        setStatus("正在转换…", false);
+
+        try {
+          const res = await fetch("/api/convert", { method: "POST", body: fd });
+          if (!res.ok) {
+            const text = await res.text();
+            setStatus(text || "转换失败（" + res.status + "）", true);
+            return;
+          }
+          const blob = await res.blob();
+          const cd = res.headers.get("Content-Disposition") || "";
+          let name = "converted";
+          const quoted = /filename="([^"]+)"/i.exec(cd);
+          const plain = /filename=([^;\s]+)/i.exec(cd);
+          const raw = quoted ? quoted[1] : plain ? plain[1] : "";
+          if (raw) {
+            try {
+              name = decodeURIComponent(raw.replace(/^UTF-8''/i, "").trim());
+            } catch (_) {
+              name = raw.trim();
+            }
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = name || "converted";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+          setStatus("转换完成，已开始下载。", false);
+        } catch (err) {
+          setStatus("网络错误：" + (err && err.message ? err.message : String(err)), true);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

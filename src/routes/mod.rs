@@ -1,6 +1,7 @@
 use actix_web::web;
 
 mod checkin;
+mod convert;
 mod dino;
 mod geo;
 mod pages;
@@ -14,6 +15,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .configure(user::configure)
                 .configure(checkin::configure)
                 .configure(dino::configure)
-                .configure(geo::configure),
+                .configure(geo::configure)
+                .configure(convert::configure),
         );
 }
