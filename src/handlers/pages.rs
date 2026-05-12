@@ -65,3 +65,9 @@ pub async fn redis_tutorial_page() -> impl Responder {
         .content_type("text/html; charset=utf-8")
         .body(include_str!("../../templates/pages/redis-tutorial.html"))
 }
+
+pub async fn game8848_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/pages/game8848.html"))
+}

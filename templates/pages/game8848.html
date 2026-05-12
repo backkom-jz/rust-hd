@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>8848 登峰挑战</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+  <style>
+    /* 8848 专属样式 */
+    .game8848-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr);
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .game8848-panel,
+    .game8848-rank {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      padding: 1rem;
+    }
+
+    .game8848-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .game8848-head strong {
+      font-size: 1.05rem;
+    }
+
+    .game8848-stats {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .game8848-stat {
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: #f3f6fb;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0.25rem 0.65rem;
+      white-space: nowrap;
+    }
+
+    .game8848-stat span {
+      font-weight: 650;
+      color: var(--ink);
+    }
+
+    .game8848-canvas {
+      width: 100%;
+      display: block;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #1a2332 0%, #2c3e50 40%, #5b7f9a 70%, #d4e6f1 100%);
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    .game8848-help {
+      margin: 0.65rem 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .game8848-rank h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    .game8848-name-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .game8848-name-row input {
+      font: inherit;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fafbfc;
+    }
+
+    .game8848-rank-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .game8848-rank-table th,
+    .game8848-rank-table td {
+      padding: 0.38rem 0.2rem;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+    }
+
+    .game8848-rank-table th:first-child,
+    .game8848-rank-table td:first-child,
+    .game8848-rank-table th:nth-child(2),
+    .game8848-rank-table td:nth-child(2) {
+      text-align: left;
+    }
+
+    .game8848-rank-table .badge-summit {
+      display: inline-block;
+      font-size: 0.7rem;
+      background: #e8b832;
+      color: #1a1a1a;
+      padding: 0.1rem 0.4rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .game8848-leaderboard-toggle {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .game8848-leaderboard-toggle button {
+      font: inherit;
+      font-size: 0.78rem;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fafbfc;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .game8848-leaderboard-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .game8848-summit-banner {
+      display: none;
+      text-align: center;
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #1a1a1a;
+      animation: bannerPulse 2s ease-in-out infinite;
+    }
+
+    .game8848-summit-banner.show {
+      display: block;
+    }
+
+    .game8848-canvas-wrap {
+      position: relative;
+    }
+
+    .game8848-pause-btn {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 5;
+      width: 32px;
+      height: 32px;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+
+    .game8848-pause-btn:hover {
+      background: rgba(0,0,0,0.55);
+    }
+
+    .game8848-mobile-ctrls {
+      display: none;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      gap: 0.5rem;
+    }
+
+    .game8848-mobile-btn {
+      flex: 1;
+      padding: 0.7rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.7);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      text-align: center;
+      transition: background 0.1s;
+      touch-action: manipulation;
+    }
+
+    .game8848-mobile-btn:active {
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    @keyframes bannerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @media (max-width: 900px) {
+      .game8848-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <header class="site-header">
+      <div class="site-brand">
+        8848 登峰挑战
+        <span>不断跳跃向上，挑战珠穆朗玛峰！</span>
+      </div>
+      <a class="back-link" href="/">返回首页</a>
+    </header>
+
+    <main class="site-main">
+      <div class="game8848-shell">
+        <section class="game8848-panel">
+          <div class="game8848-head">
+            <strong>🏔️ 登峰挑战</strong>
+            <div class="game8848-stats">
+              <div class="game8848-stat">高度：<span id="g8848-height">0</span> m</div>
+              <div class="game8848-stat">时间：<span id="g8848-time">0</span>s</div>
+              <div class="game8848-stat">连跳：<span id="g8848-combo">0</span>x</div>
+              <div class="game8848-stat">积分：<span id="g8848-score">0</span></div>
+              <div class="game8848-stat" id="g8848-rescue">救援：可用</div>
+              <div class="game8848-stat badge-display" id="g8848-badge">🥾 登山新手</div>
+            </div>
+          </div>
+          <div class="game8848-canvas-wrap">
+            <canvas id="g8848-canvas" class="game8848-canvas" width="900" height="400"></canvas>
+            <button id="g8848-pause-btn" class="game8848-pause-btn" type="button" title="暂停 (P)">⏸</button>
+          </div>
+          <div id="g8848-mobile-ctrls" class="game8848-mobile-ctrls">
+            <button id="g8848-btn-left" class="game8848-mobile-btn" type="button">◀ 左移</button>
+            <button id="g8848-btn-right" class="game8848-mobile-btn" type="button">右移 ▶</button>
+          </div>
+          <div id="g8848-summit-banner" class="game8848-summit-banner">
+            🎉 恭喜登顶珠穆朗玛峰（8848m）！🎉
+          </div>
+          <p class="game8848-help">
+              👆 点击画布 / 空格跳跃（长按更高，轻点短跳）| ← → 或 A/D 键左右移动 | P 键暂停 | 连续落平台可叠连击积分 | 每局一次坠落救援
+          </p>
+        </section>
+
+        <aside class="game8848-rank">
+          <h2>🏆 登峰排行榜</h2>
+          <div class="game8848-name-row">
+            <input id="g8848-player-name" type="text" maxlength="16" placeholder="输入昵称（默认：登山者）" />
+            <button id="g8848-restart-btn" class="primary" type="button">重新开始</button>
+          </div>
+          <div class="game8848-leaderboard-toggle">
+            <button id="g8848-tab-top" class="active" type="button">最高高度</button>
+            <button id="g8848-tab-summit" type="button">登顶记录</button>
+          </div>
+          <table class="game8848-rank-table">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>玩家</th>
+                <th>高度(m)</th>
+                <th>用时</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="g8848-rank-body"></tbody>
+          </table>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="/static/js/game8848.js"></script>
+</body>
+</html>

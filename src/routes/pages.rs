@@ -14,5 +14,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route("/checkin2", web::get().to(pages::checkin2_page))
         .route("/stats", web::get().to(pages::stats_page))
         .route("/iching", web::get().to(pages::iching_page))
-        .route("/lottery", web::get().to(pages::lottery_page));
+        .route("/lottery", web::get().to(pages::lottery_page))
+        .route("/game8848", web::get().to(pages::game8848_page));
 }
