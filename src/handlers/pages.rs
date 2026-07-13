@@ -36,6 +36,12 @@ pub async fn lottery_page() -> impl Responder {
         .body(include_str!("../../templates/lottery.html"))
 }
 
+pub async fn color_draw_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/color_draw.html"))
+}
+
 pub async fn calculator_page() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")

@@ -53,6 +53,42 @@ pub async fn init_schema(pool: &MySqlPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS color_draw_batches (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            status VARCHAR(16) NOT NULL COMMENT 'open | locked',
+            created_at DATETIME NOT NULL,
+            locked_at DATETIME NULL,
+            KEY idx_color_draw_batches_status (status),
+            KEY idx_color_draw_batches_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS color_draw_members (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            batch_id BIGINT UNSIGNED NOT NULL,
+            person_name VARCHAR(64) NOT NULL,
+            sort_order TINYINT UNSIGNED NOT NULL,
+            color VARCHAR(16) NULL COMMENT '白/灰/深蓝/黑/粉/蓝',
+            drawn_at DATETIME NULL,
+            UNIQUE KEY uk_color_draw_batch_name (batch_id, person_name),
+            UNIQUE KEY uk_color_draw_batch_color (batch_id, color),
+            KEY idx_color_draw_batch_sort (batch_id, sort_order),
+            CONSTRAINT fk_color_draw_members_batch
+                FOREIGN KEY (batch_id) REFERENCES color_draw_batches(id)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
 

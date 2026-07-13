@@ -6,10 +6,24 @@ pub fn bind_addr() -> String {
 }
 
 /// 静态资源目录（含 `img/`）。生产环境应设置 `STATIC_DIR` 指向部署机上的目录，勿依赖编译机路径。
+/// 若配置的目录不存在，回退到仓库内 `src/static`，避免本地误配导致首页 CSS 404。
 pub fn static_dir() -> PathBuf {
-    std::env::var("STATIC_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/static"))
+    let fallback = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/static");
+    match std::env::var("STATIC_DIR") {
+        Ok(raw) => {
+            let configured = PathBuf::from(raw);
+            if configured.is_dir() {
+                configured
+            } else {
+                eprintln!(
+                    "STATIC_DIR {:?} 不存在，回退到 {:?}",
+                    configured, fallback
+                );
+                fallback
+            }
+        }
+        Err(_) => fallback,
+    }
 }
 
 /// Prefer `DATABASE_URL` (`mysql://user:pass@host:port/db?charset=utf8mb4`),
