@@ -8,6 +8,7 @@ mod game8848;
 mod geo;
 mod pages;
 mod user;
+mod vote;
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg
@@ -20,6 +21,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .configure(game8848::configure)
                 .configure(geo::configure)
                 .configure(convert::configure)
-                .configure(color_draw::configure),
+                .configure(color_draw::configure)
+                .configure(vote::configure),
         );
 }

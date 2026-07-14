@@ -42,6 +42,18 @@ pub async fn color_draw_page() -> impl Responder {
         .body(include_str!("../../templates/color_draw.html"))
 }
 
+pub async fn vote_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/vote.html"))
+}
+
+pub async fn vote_admin_page() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../../templates/vote_admin.html"))
+}
+
 pub async fn calculator_page() -> impl Responder {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")

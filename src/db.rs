@@ -89,6 +89,61 @@ pub async fn init_schema(pool: &MySqlPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS vote_polls (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(200) NOT NULL,
+            status VARCHAR(16) NOT NULL COMMENT 'open | closed',
+            created_at DATETIME NOT NULL,
+            closed_at DATETIME NULL,
+            KEY idx_vote_polls_status (status),
+            KEY idx_vote_polls_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS vote_options (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            poll_id BIGINT UNSIGNED NOT NULL,
+            label VARCHAR(200) NOT NULL,
+            sort_order TINYINT UNSIGNED NOT NULL,
+            KEY idx_vote_options_poll (poll_id, sort_order),
+            CONSTRAINT fk_vote_options_poll
+                FOREIGN KEY (poll_id) REFERENCES vote_polls(id)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS vote_ballots (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+            poll_id BIGINT UNSIGNED NOT NULL,
+            phone VARCHAR(32) NOT NULL,
+            option_id BIGINT UNSIGNED NOT NULL,
+            voted_at DATETIME NOT NULL,
+            UNIQUE KEY uk_vote_ballots_poll_phone (poll_id, phone),
+            KEY idx_vote_ballots_option (option_id),
+            CONSTRAINT fk_vote_ballots_poll
+                FOREIGN KEY (poll_id) REFERENCES vote_polls(id)
+                ON DELETE CASCADE,
+            CONSTRAINT fk_vote_ballots_option
+                FOREIGN KEY (option_id) REFERENCES vote_options(id)
+                ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
 

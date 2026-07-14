@@ -11,7 +11,9 @@ use actix_files::Files;
 use actix_web::{web, App, HttpServer};
 use sqlx::mysql::MySqlPoolOptions;
 
-use crate::services::{CheckInService, ColorDrawService, DinoService, Game8848Service, UserService};
+use crate::services::{
+    CheckInService, ColorDrawService, DinoService, Game8848Service, UserService, VoteService,
+};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -46,7 +48,8 @@ async fn main() -> std::io::Result<()> {
     let checkin_service = CheckInService::new(pool.clone());
     let dino_service = DinoService::new(pool.clone());
     let game8848_service = Game8848Service::new(pool.clone());
-    let color_draw_service = ColorDrawService::new(pool);
+    let color_draw_service = ColorDrawService::new(pool.clone());
+    let vote_service = VoteService::new(pool);
     let bind_addr = config::bind_addr();
     let static_dir = config::static_dir();
 
@@ -57,6 +60,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(dino_service.clone()))
             .app_data(web::Data::new(game8848_service.clone()))
             .app_data(web::Data::new(color_draw_service.clone()))
+            .app_data(web::Data::new(vote_service.clone()))
             .service(Files::new("/static", static_dir.clone()).prefer_utf8(true))
             .configure(routes::config)
     })

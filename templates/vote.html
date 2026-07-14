@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>活动投票</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+  <style>
+    .vote-wrap { max-width: 560px; margin: 0 auto; }
+    .vote-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: clamp(1.2rem, 3vw, 1.75rem);
+    }
+    .vote-card h1 { margin: 0 0 0.35rem; font-size: 1.4rem; }
+    .vote-meta { color: var(--muted); font-size: 0.85rem; margin: 0 0 1rem; }
+    .opt {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 0.55rem;
+      cursor: pointer;
+      background: #fafbfc;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .opt:hover { border-color: rgba(26, 86, 196, 0.35); }
+    .opt.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .opt input { accent-color: var(--accent); }
+    .field { margin: 1rem 0 0.75rem; }
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.3rem;
+    }
+    .field input {
+      width: 100%;
+      font: inherit;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+    .msg {
+      display: none;
+      margin-top: 0.75rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+    }
+    .msg.show { display: block; }
+    .msg.err { background: #fde8e8; color: #8b1e1e; border: 1px solid #f5b5b5; }
+    .msg.ok { background: #e8f5ee; color: #14532d; border: 1px solid #a7e0bf; }
+    .bar-row { margin: 0.65rem 0; }
+    .bar-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.88rem;
+      margin-bottom: 0.25rem;
+    }
+    .bar-track {
+      height: 10px;
+      border-radius: 999px;
+      background: #e8ecf2;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #1a56c4, #3d7fd9);
+      border-radius: 999px;
+      width: 0;
+      transition: width 0.45s ease;
+    }
+    .bar-row.mine .bar-top { font-weight: 700; color: var(--accent); }
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 1.5rem 0.5rem;
+      font-size: 0.95rem;
+    }
+    .hidden { display: none !important; }
+    .nav-mini { font-size: 0.84rem; margin-bottom: 0.85rem; }
+    .nav-mini a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body class="has-hero-bg">
+  <div class="site-shell">
+    <div class="vote-wrap" style="width:100%;">
+      <div class="nav-mini">
+        <a href="/">← 返回首页</a>
+      </div>
+      <div class="vote-card">
+        <div id="emptyState" class="empty hidden">当前没有进行中的投票，请稍后再来。</div>
+
+        <div id="voteForm" class="hidden">
+          <h1 id="pollTitle">投票</h1>
+          <p class="vote-meta" id="pollMeta"></p>
+          <div id="options"></div>
+          <div class="field">
+            <label for="phone">手机号</label>
+            <input id="phone" type="tel" inputmode="numeric" maxlength="20" placeholder="请输入手机号" autocomplete="tel" />
+          </div>
+          <div class="actions">
+            <button class="primary" type="button" id="submitBtn">提交投票</button>
+            <button class="primary" type="button" id="viewBtn" style="background:#3a4555;">查看结果</button>
+          </div>
+        </div>
+
+        <div id="resultPanel" class="hidden">
+          <h1 id="resultTitle">投票结果</h1>
+          <p class="vote-meta" id="resultMeta"></p>
+          <div id="resultBars"></div>
+          <div class="actions">
+            <button class="primary" type="button" id="backBtn" style="background:#3a4555;">返回</button>
+          </div>
+        </div>
+
+        <div class="msg" id="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const emptyState = document.getElementById("emptyState");
+      const voteForm = document.getElementById("voteForm");
+      const resultPanel = document.getElementById("resultPanel");
+      const optionsEl = document.getElementById("options");
+      const phoneEl = document.getElementById("phone");
+      const submitBtn = document.getElementById("submitBtn");
+      const viewBtn = document.getElementById("viewBtn");
+      const backBtn = document.getElementById("backBtn");
+      const msg = document.getElementById("msg");
+      const PHONE_KEY = "votePhone";
+
+      let poll = null;
+      let selectedId = null;
+      let busy = false;
+
+      phoneEl.value = localStorage.getItem(PHONE_KEY) || "";
+
+      function showMsg(text, ok) {
+        msg.textContent = text || "";
+        msg.className = "msg" + (text ? " show " + (ok ? "ok" : "err") : "");
+      }
+
+      function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      async function api(path, opts) {
+        const res = await fetch(path, Object.assign({
+          headers: { "Content-Type": "application/json" },
+        }, opts || {}));
+        const data = await res.json().catch(function () { return {}; });
+        if (!res.ok) throw new Error(data.error || ("请求失败 " + res.status));
+        return data;
+      }
+
+      function renderOptions() {
+        optionsEl.innerHTML = poll.options.map(function (o) {
+          const checked = selectedId === o.id ? " selected" : "";
+          return (
+            '<label class="opt' + checked + '" data-id="' + o.id + '">' +
+              '<input type="radio" name="opt" value="' + o.id + '"' +
+              (selectedId === o.id ? " checked" : "") + " />" +
+              "<span>" + escapeHtml(o.label) + "</span>" +
+            "</label>"
+          );
+        }).join("");
+        optionsEl.querySelectorAll(".opt").forEach(function (el) {
+          el.addEventListener("click", function () {
+            selectedId = Number(el.getAttribute("data-id"));
+            renderOptions();
+          });
+        });
+      }
+
+      function showForm() {
+        emptyState.classList.add("hidden");
+        resultPanel.classList.add("hidden");
+        voteForm.classList.remove("hidden");
+        document.getElementById("pollTitle").textContent = poll.title;
+        document.getElementById("pollMeta").textContent =
+          "单选 · 同一手机号本场仅可投一次 · 投完后可查看结果";
+        renderOptions();
+      }
+
+      function showEmpty() {
+        voteForm.classList.add("hidden");
+        resultPanel.classList.add("hidden");
+        emptyState.classList.remove("hidden");
+      }
+
+      function renderResults(data) {
+        voteForm.classList.add("hidden");
+        emptyState.classList.add("hidden");
+        resultPanel.classList.remove("hidden");
+        document.getElementById("resultTitle").textContent = data.title;
+        document.getElementById("resultMeta").textContent =
+          "共 " + data.total_votes + " 票 · 状态：" +
+          (data.status === "open" ? "进行中" : "已结束");
+        const total = data.total_votes || 0;
+        document.getElementById("resultBars").innerHTML = data.options.map(function (o) {
+          const pct = total > 0 ? Math.round((o.votes * 1000) / total) / 10 : 0;
+          const mine = data.my_option_id === o.id ? " mine" : "";
+          return (
+            '<div class="bar-row' + mine + '">' +
+              '<div class="bar-top"><span>' + escapeHtml(o.label) +
+              (mine ? "（你的选择）" : "") +
+              "</span><span>" + o.votes + " 票 · " + pct + "%</span></div>" +
+              '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+            "</div>"
+          );
+        }).join("");
+      }
+
+      async function refresh() {
+        const data = await api("/api/vote/current");
+        poll = data.poll;
+        if (!poll) {
+          showEmpty();
+          return;
+        }
+        showForm();
+        const phone = phoneEl.value.trim();
+        if (phone) {
+          try {
+            const st = await api("/api/vote/status?phone=" + encodeURIComponent(phone));
+            if (st.voted) {
+              const results = await api(
+                "/api/vote/results?phone=" + encodeURIComponent(phone) + "&poll_id=" + poll.id
+              );
+              renderResults(results);
+            }
+          } catch (_) {}
+        }
+      }
+
+      submitBtn.addEventListener("click", async function () {
+        if (busy || !poll) return;
+        const phone = phoneEl.value.trim();
+        if (!selectedId) {
+          showMsg("请选择一个选项", false);
+          return;
+        }
+        busy = true;
+        submitBtn.disabled = true;
+        showMsg("", false);
+        try {
+          localStorage.setItem(PHONE_KEY, phone);
+          const data = await api("/api/vote/submit", {
+            method: "POST",
+            body: JSON.stringify({ phone: phone, option_id: selectedId }),
+          });
+          showMsg("投票成功", true);
+          renderResults(data);
+        } catch (e) {
+          showMsg(e.message || "提交失败", false);
+        } finally {
+          busy = false;
+          submitBtn.disabled = false;
+        }
+      });
+
+      viewBtn.addEventListener("click", async function () {
+        if (busy || !poll) return;
+        const phone = phoneEl.value.trim();
+        busy = true;
+        showMsg("", false);
+        try {
+          localStorage.setItem(PHONE_KEY, phone);
+          const data = await api(
+            "/api/vote/results?phone=" + encodeURIComponent(phone) + "&poll_id=" + poll.id
+          );
+          renderResults(data);
+        } catch (e) {
+          showMsg(e.message || "无法查看结果", false);
+        } finally {
+          busy = false;
+        }
+      });
+
+      backBtn.addEventListener("click", function () {
+        showMsg("", false);
+        if (poll) showForm();
+        else showEmpty();
+      });
+
+      refresh().catch(function (e) {
+        showEmpty();
+        showMsg(e.message || "加载失败", false);
+      });
+    })();
+  </script>
+</body>
+</html>
